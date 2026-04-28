@@ -2,102 +2,107 @@
 
 This file provides guidance for AI coding agents working in this repository.
 
-**This is a living document.** When you make a mistake or learn something new about this codebase, add it to [Lessons Learned](docs/agents/lessons-learned.md).
+## What this repo is
 
-## Quick Links
+**Meet Susi** — a personal negotiation agent that works by email. Built for the Vercel "Zero to Agent" hackathon (April 24 → May 3, 2026). Forked from `vercel-labs/open-agents` and adapted for negotiation use cases.
+
+See [README.md](README.md) for the product overview and [docs/spec/meetsusi-technical-spec-v3.md](docs/spec/meetsusi-technical-spec-v3.md) for the full technical spec.
+
+**This is a living document.** When you make a mistake or learn something new, add it to [docs/agents/lessons-learned.md](docs/agents/lessons-learned.md).
+
+## Quick links
 
 - [Architecture & Workspace Structure](docs/agents/architecture.md)
 - [Code Style & Patterns](docs/agents/code-style.md)
 - [Lessons Learned](docs/agents/lessons-learned.md)
+- [Product brief](docs/spec/meetsusi-hackathon.md)
+- [Technical spec v3 (current)](docs/spec/meetsusi-technical-spec-v3.md)
 
-## Database & Migrations
+## Architecture summary
+
+```
+Chat (Next.js + AI SDK) ──▶ Workflow SDK durable runs ──▶ Cloudflare Email
+              │                       ▲
+              │                       │
+              ▼                       │
+         Supabase Postgres ◀──────────┘
+         (Drizzle ORM, RLS off, app-level auth)
+```
+
+- **Chat** is synchronous, streaming, and reflects workflow state. It does NOT manage the negotiation directly.
+- **The workflow** (`runNegotiation`) is the durable agent that survives crashes and waits days for replies.
+- **The webhook** (`/api/email/inbound`) is dumb — it stores the inbound email and sends a signal to the workflow.
+
+## Database & migrations
 
 Schema lives in `apps/web/lib/db/schema.ts`. Migrations are managed by Drizzle Kit.
 
 **After modifying `schema.ts`, always generate a migration:**
 
 ```bash
-bun run --cwd apps/web db:generate   # Creates a new .sql migration file
+bun run --cwd apps/web db:generate
 ```
 
-Commit the generated `.sql` file alongside the schema change. **Do not use `db:push`** except for local throwaway databases.
+Commit the generated `.sql` alongside the schema change. **Do not use `db:push`** except for local throwaway databases.
 
-Migrations run automatically during `bun run build` (via `lib/db/migrate.ts`), so every Vercel deploy — both preview and production — applies pending migrations to its own database.
-
-### Environment isolation
-
-Neon database branching is enabled in the Vercel project settings. Every preview deployment automatically gets its own isolated database branch forked from production. This means preview deployments never read or write production data. Production deployments use the main Neon database.
+Migrations run automatically during `bun run build` (via `lib/db/migrate.ts`), so every Vercel deploy applies pending migrations to its own database.
 
 ## Commands
 
 ```bash
 # Development
-bun run web            # Run web app
+bun run web
 
-# Quality checks (REQUIRED after making any changes)
-bun run ci                                 # Required: run format check, lint, typecheck, and tests
-turbo typecheck                            # Type check all packages
+# Quality (run after any change)
+bun run ci          # check + typecheck + tests
+turbo typecheck     # types only
+bun run check       # ultracite (oxlint + oxfmt)
+bun run fix         # auto-fix lint + format
 
-# Linting and formatting (Ultracite - oxlint + oxfmt, run from root)
-bun run check                              # Lint and format check all files
-bun run fix                                # Lint fix and format all files
+# Filter
+turbo typecheck --filter=web
 
-# Filter by package (use --filter)
-turbo typecheck --filter=web # Type check web app only
-
-# Testing
-bun test                                              # Run all tests
-bun test path/to/file.test.ts                         # Run single test file
-bun test --watch                                      # Watch mode
-bun run test:verbose                                  # Run tests with JUnit reporter streamed to stdout (useful in non-interactive shells)
-bun run test:verbose path/to/file.test.ts             # Same verbose output for a single test file
+# Tests
+bun test
+bun test path/to/file.test.ts
+bun test --watch
+bun run test:verbose
 ```
 
-**CI/script execution rules:**
+**Execution rules:**
+- Run checks through package scripts (`bun run ci`, `bun run --cwd apps/web db:check`).
+- Prefer `bun run <script>` over invoking tool binaries directly so local matches CI.
 
-- Run project checks through package scripts (for example `bun run ci`, `bun run --cwd apps/web db:check`).
-- Prefer `bun run <script>` over invoking tool binaries directly (`bunx`, `bun x`, `tsc`, `eslint`, etc.) so local runs match CI behavior.
+## Git
 
-## Git Commands
+- **Branch sync:** when bringing in `origin/main`, prefer `git fetch origin main` then `git merge origin/main` (no rebase unless asked).
+- **Quote dynamic-route paths:** `git add "apps/web/app/negotiations/[id]/page.tsx"` — zsh treats `[id]` as a glob.
+- **Conventional commits.** No "Co-Authored-By" trailers.
 
-- **Branch sync preference:** When bringing in `origin/main`, prefer a normal merge (`git fetch origin main` then `git merge origin/main`) instead of rebasing, unless explicitly requested otherwise.
+## Code style summary
 
-**Quote paths with special characters**: File paths containing brackets (like Next.js dynamic routes `[id]`, `[slug]`) are interpreted as glob patterns by zsh. Always quote these paths in git commands:
+- **Bun exclusively** (not Node/npm/pnpm).
+- **Files**: kebab-case. **Types**: PascalCase. **Functions**: camelCase.
+- **Never use `any`** — use `unknown` and narrow with type guards.
+- **No `.js` extensions** in imports.
+- **Ultracite** (oxlint + oxfmt). Double quotes, 2-space indent.
+- **Zod** for validation; derive types with `z.infer`.
 
-```bash
-# Wrong - zsh interprets [id] as a glob pattern
-git add apps/web/app/tasks/[id]/page.tsx
-# Error: no matches found: apps/web/app/tasks/[id]/page.tsx
+See [docs/agents/code-style.md](docs/agents/code-style.md) for full conventions.
 
-# Correct - quote the path
-git add "apps/web/app/tasks/[id]/page.tsx"
-```
+## Hard rules for working on Susi
 
-## Architecture (Summary)
+1. **Never let Susi send an email without explicit user approval.** Validate `email.status === 'approved'` at the workflow step level before any send.
+2. **The agent (chat) does NOT write to the DB directly.** All DB ops go through tools or workflow steps.
+3. **Webhook validates HMAC every time.** No exceptions.
+4. **Workflow steps must be idempotent.** Retries should not duplicate emails or charges.
+5. **No non-deterministic APIs** (`Date.now`, `Math.random`) inside `"use workflow"` function bodies — wrap them in steps.
+6. **All `waitForSignal` calls have timeouts.** Avoid zombie workflows.
+7. **Service-role keys never in the client.** Server-only.
 
-```
-Web -> Agent (packages/agent) -> Sandbox (packages/sandbox)
-```
+## File organization
 
-See [Architecture & Workspace Structure](docs/agents/architecture.md) for details.
-
-## File Organization & Separation of Concerns
-
-- Do **not** append new functionality to the bottom of an existing file by default.
-- Before adding code, decide whether the behavior is a separate concern that should live in its own file.
-- Prefer creating a new colocated file for distinct concerns (components, hooks, utilities, schemas, data-access helpers, etc.).
-- If a file is already large or handling multiple responsibilities, extract the new logic (and related helpers/types) into focused modules and import them.
-- For large page/view/client components, default to adding new feature behavior in colocated hooks and colocated child components instead of growing the main file.
-- If a change introduces a distinct cluster of state, effects, handlers, API calls, or derived UI labels for one feature, treat that as a strong signal to extract it.
-- Keep each file focused on one primary responsibility; avoid mixing unrelated UI, business logic, and data-access code in the same file.
-
-## Code Style (Summary)
-
-- **Bun exclusively** (not Node/npm/pnpm)
-- **Files**: kebab-case, **Types**: PascalCase, **Functions**: camelCase
-- **Never use `any`** -- use `unknown` and narrow with type guards
-- **No `.js` extensions** in imports
-- **Ultracite** (oxlint + oxfmt) for linting and formatting (double quotes, 2-space indent)
-- **Zod** schemas for validation, derive types with `z.infer`
-
-See [Code Style & Patterns](docs/agents/code-style.md) for full conventions, tool implementation patterns, and dependency patterns.
+- Don't append new functionality to the bottom of an existing file by default.
+- Prefer creating colocated files for distinct concerns (components, hooks, utilities, schemas, data-access helpers).
+- Extract large feature behavior into colocated hooks and child components.
+- Keep each file focused on one responsibility.
