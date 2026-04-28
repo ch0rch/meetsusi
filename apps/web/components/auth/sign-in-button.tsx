@@ -1,75 +1,106 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import { useState, type ComponentProps } from "react";
+import { Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/auth/client";
-
-function VercelIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="currentColor"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M12 1L24 22H0L12 1Z" />
-    </svg>
-  );
-}
-
-function resolveRedirectPath(value: string): string {
-  if (value.startsWith("/") && !value.startsWith("//")) {
-    return value;
-  }
-
-  try {
-    const parsed = new URL(value, window.location.origin);
-    if (parsed.origin === window.location.origin) {
-      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
-    }
-  } catch {
-    return window.location.pathname + window.location.search;
-  }
-
-  return window.location.pathname + window.location.search;
-}
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 type SignInButtonProps = {
   callbackUrl?: string;
 } & Omit<ComponentProps<typeof Button>, "onClick">;
 
-export function SignInButton({
-  callbackUrl,
-  disabled,
-  ...props
-}: SignInButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
+export function SignInButton({ callbackUrl = "/negotiations", ...props }: SignInButtonProps) {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
-  function handleSignIn() {
-    if (disabled || isLoading) {
-      return;
-    }
+  async function handleSend() {
+    if (!email || loading) return;
+    setLoading(true);
 
-    const fallback = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-    const redirectPath = resolveRedirectPath(callbackUrl ?? fallback);
+    const supabase = createSupabaseBrowserClient();
+    const redirectTo =
+      typeof window !== "undefined"
+        ? `${window.location.origin}/auth/callback?next=${encodeURIComponent(callbackUrl)}`
+        : `/auth/callback?next=${encodeURIComponent(callbackUrl)}`;
 
-    setIsLoading(true);
-    authClient.signIn.social({
-      provider: "vercel",
-      callbackURL: redirectPath,
+    await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: redirectTo },
     });
+
+    setLoading(false);
+    setSent(true);
+  }
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setEmail("");
+      setSent(false);
+      setLoading(false);
+    }
   }
 
   return (
-    <Button
-      {...props}
-      aria-busy={isLoading}
-      disabled={disabled || isLoading}
-      onClick={handleSignIn}
-    >
-      {isLoading ? <Loader2 className="animate-spin" /> : <VercelIcon />}
-      {isLoading ? "Signing in..." : "Sign in with Vercel"}
-    </Button>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button {...props}>
+          <Mail className="mr-2 h-4 w-4" />
+          Sign in
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Sign in to Meet Susi</DialogTitle>
+          <DialogDescription>
+            {sent
+              ? "Check your email for the magic link."
+              : "Enter your email and we'll send you a sign-in link."}
+          </DialogDescription>
+        </DialogHeader>
+        {!sent ? (
+          <div className="flex flex-col gap-3 pt-2">
+            <Input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              autoFocus
+            />
+            <Button onClick={handleSend} disabled={!email || loading} className="w-full">
+              {loading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Mail className="mr-2 h-4 w-4" />
+              )}
+              {loading ? "Sending..." : "Send magic link"}
+            </Button>
+          </div>
+        ) : (
+          <div className="pt-2 text-center text-sm text-muted-foreground">
+            Didn&apos;t receive it? Check your spam folder or{" "}
+            <button
+              className="underline hover:no-underline"
+              onClick={() => setSent(false)}
+            >
+              try again
+            </button>
+            .
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

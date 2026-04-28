@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { authClient } from "@/lib/auth/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 
 interface SessionUser {
   id: string;
@@ -16,6 +16,8 @@ interface SessionState {
   isAuthenticated: boolean;
 }
 
+const supabase = createSupabaseBrowserClient();
+
 export function useSession(): SessionState {
   const [state, setState] = useState<SessionState>({
     session: null,
@@ -24,16 +26,15 @@ export function useSession(): SessionState {
   });
 
   useEffect(() => {
-    authClient.getSession().then((result) => {
-      if (result.data?.user) {
-        const user = result.data.user;
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
         setState({
           session: {
             user: {
               id: user.id,
-              email: user.email ?? undefined,
-              name: user.name ?? "",
-              avatar: user.image ?? "",
+              email: user.email,
+              name: user.user_metadata?.["full_name"] ?? user.email ?? "",
+              avatar: user.user_metadata?.["avatar_url"] ?? "",
             },
           },
           loading: false,
@@ -43,6 +44,30 @@ export function useSession(): SessionState {
         setState({ session: null, loading: false, isAuthenticated: false });
       }
     });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      const user = session?.user ?? null;
+      if (user) {
+        setState({
+          session: {
+            user: {
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata?.["full_name"] ?? user.email ?? "",
+              avatar: user.user_metadata?.["avatar_url"] ?? "",
+            },
+          },
+          loading: false,
+          isAuthenticated: true,
+        });
+      } else {
+        setState({ session: null, loading: false, isAuthenticated: false });
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   return state;

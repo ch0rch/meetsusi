@@ -12,7 +12,7 @@ import {
 } from "react";
 import { Toaster } from "sonner";
 import { SWRConfig } from "swr";
-import { authClient } from "@/lib/auth/client";
+import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FetchError } from "@/lib/swr";
 
 const THEME_STORAGE_KEY = "meetsusi-theme";
@@ -90,7 +90,8 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
       if (isAuthError && !signingOut.current) {
         signingOut.current = true;
-        authClient
+        const supabase = createSupabaseBrowserClient();
+        supabase.auth
           .signOut()
           .catch(() => {})
           .finally(() => {

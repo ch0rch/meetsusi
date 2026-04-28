@@ -1,4 +1,10 @@
-import { toNextJsHandler } from "better-auth/next-js";
-import { auth } from "@/lib/auth/config";
+import { NextResponse } from "next/server";
 
-export const { GET, POST } = toNextJsHandler(auth);
+// Auth is handled by Supabase. The callback lives at /auth/callback.
+export function GET() {
+  return NextResponse.json({ error: "Not found" }, { status: 404 });
+}
+
+export function POST() {
+  return NextResponse.json({ error: "Not found" }, { status: 404 });
+}

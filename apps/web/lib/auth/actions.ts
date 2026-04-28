@@ -1,10 +1,10 @@
 "use server";
 
-import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth/config";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export async function signOut(): Promise<void> {
-  await auth.api.signOut({ headers: await headers() });
+  const supabase = await createSupabaseServerClient();
+  await supabase.auth.signOut();
   redirect("/");
 }

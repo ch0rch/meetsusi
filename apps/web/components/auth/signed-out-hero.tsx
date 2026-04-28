@@ -38,11 +38,12 @@ export function SignedOutHero() {
           <div className="mx-auto max-w-[1320px] px-6">
             <div className="max-w-[740px]">
               <h1 className="text-4xl font-semibold leading-[1.03] tracking-tighter sm:text-5xl md:text-7xl">
-                Open Agents.
+                Meet Susi.
               </h1>
               <p className="mt-4 text-balance text-base leading-relaxed text-(--l-fg-2) sm:mt-6 sm:text-xl">
-                Spawn coding agents that run infinitely in the cloud. Powered by
-                AI SDK, Gateway, Sandbox, and Workflow SDK.
+                Your personal negotiation agent. Tell Susi what you want to
+                negotiate — she researches prices, drafts emails, and handles
+                counter-offers while you wait.
               </p>
             </div>
 
