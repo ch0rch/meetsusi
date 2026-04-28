@@ -1,4 +1,3 @@
-import { openAgent } from "@open-agents/agent";
+import { gateway } from "@open-agents/agent";
 
-// Configure the agent here - single source of truth for the web app
-export const webAgent = openAgent;
+export const SUSI_MODEL = gateway("anthropic/claude-sonnet-4-6");

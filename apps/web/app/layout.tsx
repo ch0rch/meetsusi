@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 const themeInitializationScript = `
 (() => {
-  const storageKey = "open-agents-theme";
+  const storageKey = "meetsusi-theme";
   const darkModeMediaQuery = "(prefers-color-scheme: dark)";
   const storedTheme = window.localStorage.getItem(storageKey);
 
@@ -36,29 +36,24 @@ const themeInitializationScript = `
 })();
 `;
 
-const isPreviewDeployment = process.env.VERCEL_ENV === "preview";
-const faviconPath = isPreviewDeployment
-  ? "/favicon-preview.svg"
-  : "/favicon.ico";
 const metadataBase =
   process.env.VERCEL_ENV === "production" &&
   process.env.VERCEL_PROJECT_PRODUCTION_URL
     ? new URL(`https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`)
     : process.env.VERCEL_URL
       ? new URL(`https://${process.env.VERCEL_URL}`)
-      : new URL("https://open-agents.dev");
+      : new URL("https://meetsusi.com");
 
 export const metadata: Metadata = {
   metadataBase,
   title: {
-    default: "Open Agents",
-    template: "%s | Open Agents",
+    default: "Meet Susi — Your Personal Negotiation Agent",
+    template: "%s | Meet Susi",
   },
   description:
-    "Spawn coding agents that run infinitely in the cloud. Powered by AI SDK, Gateway, Sandbox, and Workflow SDK.",
+    "Susi negotiates by email on your behalf. SaaS renewals, car prices, rent — she handles the awkward part so you don't have to.",
   icons: {
-    icon: faviconPath,
-    shortcut: faviconPath,
+    icon: "/favicon.ico",
   },
   twitter: {
     card: "summary_large_image",

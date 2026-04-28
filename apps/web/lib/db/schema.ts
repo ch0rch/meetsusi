@@ -1,33 +1,30 @@
-import type { SandboxState } from "@open-agents/sandbox";
-import type { ModelVariant } from "@/lib/model-variants";
-import type { GlobalSkillRef } from "@/lib/skills/global-skill-refs";
 import {
   boolean,
   index,
   integer,
   jsonb,
+  numeric,
+  pgEnum,
   pgTable,
-  primaryKey,
   text,
   timestamp,
   uniqueIndex,
 } from "drizzle-orm/pg-core";
 
-// users
+// ---------------------------------------------------------------------------
+// better-auth tables (do not remove)
+// ---------------------------------------------------------------------------
+
 export const users = pgTable("users", {
   id: text("id").primaryKey(),
-  username: text("username").notNull(),
-  email: text("email"),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
-  name: text("name"),
-  avatarUrl: text("avatar_url"),
-  isAdmin: boolean("is_admin").notNull().default(false),
+  image: text("image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  lastLoginAt: timestamp("last_login_at").defaultNow().notNull(),
 });
 
-// oauth provider accounts
 export const accounts = pgTable("accounts", {
   id: text("id").primaryKey(),
   accountId: text("account_id").notNull(),
@@ -46,7 +43,6 @@ export const accounts = pgTable("accounts", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// better-auth sessions
 export const authSessions = pgTable("auth_sessions", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at").notNull(),
@@ -60,7 +56,6 @@ export const authSessions = pgTable("auth_sessions", {
     .references(() => users.id, { onDelete: "cascade" }),
 });
 
-// better-auth verification tokens
 export const verification = pgTable("verification", {
   id: text("id").primaryKey(),
   identifier: text("identifier").notNull(),
@@ -70,330 +65,217 @@ export const verification = pgTable("verification", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const githubInstallations = pgTable(
-  "github_installations",
+// ---------------------------------------------------------------------------
+// Susi — enums
+// ---------------------------------------------------------------------------
+
+export const negotiationStatusEnum = pgEnum("negotiation_status", [
+  "researching",
+  "awaiting_approval",
+  "negotiating",
+  "waiting_reply",
+  "won",
+  "lost",
+  "cancelled",
+]);
+
+export const negotiationCategoryEnum = pgEnum("negotiation_category", [
+  "saas",
+  "auto",
+  "real_estate",
+  "high_ticket",
+  "other",
+]);
+
+export const emailDirectionEnum = pgEnum("email_direction", [
+  "outbound",
+  "inbound",
+]);
+
+export const emailStatusEnum = pgEnum("email_status", [
+  "draft",
+  "pending_approval",
+  "approved",
+  "sent",
+  "received",
+  "failed",
+]);
+
+// ---------------------------------------------------------------------------
+// negotiations
+// ---------------------------------------------------------------------------
+
+export const negotiations = pgTable(
+  "negotiations",
   {
     id: text("id").primaryKey(),
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    installationId: integer("installation_id").notNull(),
-    accountLogin: text("account_login").notNull(),
-    accountType: text("account_type", {
-      enum: ["User", "Organization"],
-    }).notNull(),
-    repositorySelection: text("repository_selection", {
-      enum: ["all", "selected"],
-    }).notNull(),
-    installationUrl: text("installation_url"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  },
-  (table) => [
-    uniqueIndex("github_installations_user_installation_idx").on(
-      table.userId,
-      table.installationId,
-    ),
-    uniqueIndex("github_installations_user_account_idx").on(
-      table.userId,
-      table.accountLogin,
-    ),
-  ],
-);
 
-export const vercelProjectLinks = pgTable(
-  "vercel_project_links",
-  {
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    repoOwner: text("repo_owner").notNull(),
-    repoName: text("repo_name").notNull(),
-    projectId: text("project_id").notNull(),
-    projectName: text("project_name").notNull(),
-    teamId: text("team_id"),
-    teamSlug: text("team_slug"),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  },
-  (table) => [
-    primaryKey({
-      columns: [table.userId, table.repoOwner, table.repoName],
-    }),
-  ],
-);
-
-export const sessions = pgTable(
-  "sessions",
-  {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
+    // Context
     title: text("title").notNull(),
-    status: text("status", {
-      enum: ["running", "completed", "failed", "archived"],
-    })
-      .notNull()
-      .default("running"),
-    // Repository info
-    repoOwner: text("repo_owner"),
-    repoName: text("repo_name"),
-    branch: text("branch"),
-    cloneUrl: text("clone_url"),
-    vercelProjectId: text("vercel_project_id"),
-    vercelProjectName: text("vercel_project_name"),
-    vercelTeamId: text("vercel_team_id"),
-    vercelTeamSlug: text("vercel_team_slug"),
-    // Whether this session uses a new auto-generated branch
-    isNewBranch: boolean("is_new_branch").default(false).notNull(),
-    // Optional per-session override for auto commit + push behavior.
-    // null means "use the user's default preference".
-    autoCommitPushOverride: boolean("auto_commit_push_override"),
-    // Optional per-session override for auto PR creation after auto-commit.
-    // null means "use the user's default preference".
-    autoCreatePrOverride: boolean("auto_create_pr_override"),
-    globalSkillRefs: jsonb("global_skill_refs")
-      .$type<GlobalSkillRef[]>()
-      .notNull()
-      .default([]),
-    // Unified sandbox state
-    sandboxState: jsonb("sandbox_state").$type<SandboxState>(),
-    // Lifecycle orchestration state for sandbox management
-    lifecycleState: text("lifecycle_state", {
-      enum: [
-        "provisioning",
-        "active",
-        "hibernating",
-        "hibernated",
-        "restoring",
-        "archived",
-        "failed",
-      ],
-    }),
-    lifecycleVersion: integer("lifecycle_version").notNull().default(0),
-    lastActivityAt: timestamp("last_activity_at"),
-    sandboxExpiresAt: timestamp("sandbox_expires_at"),
-    hibernateAfter: timestamp("hibernate_after"),
-    lifecycleRunId: text("lifecycle_run_id"),
-    lifecycleError: text("lifecycle_error"),
-    // Git stats (for display in session list)
-    linesAdded: integer("lines_added").default(0),
-    linesRemoved: integer("lines_removed").default(0),
-    // PR info if created
-    prNumber: integer("pr_number"),
-    prStatus: text("pr_status", {
-      enum: ["open", "merged", "closed"],
-    }),
-    // Snapshot info (for cached snapshots feature)
-    snapshotUrl: text("snapshot_url"),
-    snapshotCreatedAt: timestamp("snapshot_created_at"),
-    snapshotSizeBytes: integer("snapshot_size_bytes"),
-    // Cached diff for offline viewing
-    cachedDiff: jsonb("cached_diff"),
-    cachedDiffUpdatedAt: timestamp("cached_diff_updated_at"),
+    category: negotiationCategoryEnum("category").notNull().default("other"),
+    currentPrice: numeric("current_price"),
+    targetPrice: numeric("target_price"),
+    currency: text("currency").notNull().default("USD"),
+    context: text("context"),
+    vendorName: text("vendor_name"),
+    vendorEmail: text("vendor_email"),
+
+    // Status
+    status: negotiationStatusEnum("status").notNull().default("researching"),
+    finalPrice: numeric("final_price"),
+
+    // Email infrastructure — negotiate-[shortId]@domain
+    susiEmail: text("susi_email").notNull().unique(),
+
+    // Workflow SDK
+    workflowRunId: text("workflow_run_id"),
+    workflowStatus: text("workflow_status"),
+
+    // Safety limits
+    maxRounds: integer("max_rounds").notNull().default(8),
+    roundsCompleted: integer("rounds_completed").notNull().default(0),
+
     // Timestamps
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at").defaultNow().notNull(),
+    wonAt: timestamp("won_at"),
+    lostAt: timestamp("lost_at"),
   },
-  (table) => [index("sessions_user_id_idx").on(table.userId)],
+  (t) => [
+    index("negotiations_user_id_idx").on(t.userId),
+    index("negotiations_status_idx").on(t.status),
+    uniqueIndex("negotiations_susi_email_idx").on(t.susiEmail),
+    index("negotiations_workflow_run_idx").on(t.workflowRunId),
+  ],
 );
 
-export const chats = pgTable(
-  "chats",
+// ---------------------------------------------------------------------------
+// emails
+// ---------------------------------------------------------------------------
+
+export const emails = pgTable(
+  "emails",
   {
     id: text("id").primaryKey(),
-    sessionId: text("session_id")
+    negotiationId: text("negotiation_id")
       .notNull()
-      .references(() => sessions.id, { onDelete: "cascade" }),
-    title: text("title").notNull(),
-    modelId: text("model_id").default("anthropic/claude-haiku-4.5"),
-    activeStreamId: text("active_stream_id"),
-    lastAssistantMessageAt: timestamp("last_assistant_message_at"),
+      .references(() => negotiations.id, { onDelete: "cascade" }),
+
+    direction: emailDirectionEnum("direction").notNull(),
+    fromEmail: text("from_email").notNull(),
+    toEmail: text("to_email").notNull(),
+    subject: text("subject"),
+    body: text("body").notNull(),
+
+    status: emailStatusEnum("status").notNull().default("draft"),
+    approvedByUserAt: timestamp("approved_by_user_at"),
+    sentAt: timestamp("sent_at"),
+    receivedAt: timestamp("received_at"),
+    failedReason: text("failed_reason"),
+
+    // RFC 5322 threading
+    messageId: text("message_id").unique(),
+    inReplyTo: text("in_reply_to"),
+    emailReferences: text("email_references").array(),
+
+    // Idempotency key for inbound dedup
+    externalId: text("external_id").unique(),
+
+    // Inbound classification
+    isAutoReply: boolean("is_auto_reply").notNull().default(false),
+    isBounce: boolean("is_bounce").notNull().default(false),
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [index("chats_session_id_idx").on(table.sessionId)],
+  (t) => [
+    index("emails_negotiation_id_idx").on(t.negotiationId),
+    index("emails_status_idx").on(t.status),
+  ],
 );
 
-export const shares = pgTable(
-  "shares",
+// ---------------------------------------------------------------------------
+// messages (chat conversation per negotiation)
+// ---------------------------------------------------------------------------
+
+export const messageRoleEnum = pgEnum("message_role", ["user", "assistant"]);
+
+export const messages = pgTable(
+  "messages",
   {
     id: text("id").primaryKey(),
-    chatId: text("chat_id")
-      .notNull()
-      .references(() => chats.id, { onDelete: "cascade" }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  },
-  (table) => [uniqueIndex("shares_chat_id_idx").on(table.chatId)],
-);
-
-export const chatMessages = pgTable("chat_messages", {
-  id: text("id").primaryKey(),
-  chatId: text("chat_id")
-    .notNull()
-    .references(() => chats.id, { onDelete: "cascade" }),
-  role: text("role", {
-    enum: ["user", "assistant"],
-  }).notNull(),
-  // Store the full message parts as JSON for flexibility
-  parts: jsonb("parts").notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export const chatReads = pgTable(
-  "chat_reads",
-  {
+    negotiationId: text("negotiation_id").references(() => negotiations.id, {
+      onDelete: "cascade",
+    }),
     userId: text("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    chatId: text("chat_id")
-      .notNull()
-      .references(() => chats.id, { onDelete: "cascade" }),
-    lastReadAt: timestamp("last_read_at").notNull().defaultNow(),
+
+    role: messageRoleEnum("role").notNull(),
+    content: text("content").notNull(),
+    // AI SDK message parts (tool calls, tool results, etc.)
+    parts: jsonb("parts"),
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at").defaultNow().notNull(),
   },
-  (table) => [
-    primaryKey({ columns: [table.userId, table.chatId] }),
-    index("chat_reads_chat_id_idx").on(table.chatId),
+  (t) => [
+    index("messages_negotiation_id_idx").on(t.negotiationId),
+    index("messages_user_id_idx").on(t.userId),
   ],
 );
 
-export const workflowRuns = pgTable(
-  "workflow_runs",
+// ---------------------------------------------------------------------------
+// market_research_cache
+// ---------------------------------------------------------------------------
+
+export const marketResearchCache = pgTable(
+  "market_research_cache",
   {
     id: text("id").primaryKey(),
-    chatId: text("chat_id")
-      .notNull()
-      .references(() => chats.id, { onDelete: "cascade" }),
-    sessionId: text("session_id")
-      .notNull()
-      .references(() => sessions.id, { onDelete: "cascade" }),
-    userId: text("user_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    modelId: text("model_id"),
-    status: text("status", {
-      enum: ["completed", "aborted", "failed"],
-    }).notNull(),
-    startedAt: timestamp("started_at").notNull(),
-    finishedAt: timestamp("finished_at").notNull(),
-    totalDurationMs: integer("total_duration_ms").notNull(),
+    cacheKey: text("cache_key").notNull().unique(),
+    result: jsonb("result").notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
   },
-  (table) => [
-    index("workflow_runs_chat_id_idx").on(table.chatId),
-    index("workflow_runs_session_id_idx").on(table.sessionId),
-    index("workflow_runs_user_id_idx").on(table.userId),
-  ],
+  (t) => [index("market_research_cache_expires_idx").on(t.expiresAt)],
 );
 
-export const workflowRunSteps = pgTable(
-  "workflow_run_steps",
+// ---------------------------------------------------------------------------
+// workflow_events (audit log)
+// ---------------------------------------------------------------------------
+
+export const workflowEvents = pgTable(
+  "workflow_events",
   {
     id: text("id").primaryKey(),
-    workflowRunId: text("workflow_run_id")
-      .notNull()
-      .references(() => workflowRuns.id, { onDelete: "cascade" }),
-    stepNumber: integer("step_number").notNull(),
-    startedAt: timestamp("started_at").notNull(),
-    finishedAt: timestamp("finished_at").notNull(),
-    durationMs: integer("duration_ms").notNull(),
-    finishReason: text("finish_reason"),
-    rawFinishReason: text("raw_finish_reason"),
+    negotiationId: text("negotiation_id").references(() => negotiations.id, {
+      onDelete: "cascade",
+    }),
+    workflowRunId: text("workflow_run_id"),
+    eventType: text("event_type").notNull(),
+    stepName: text("step_name"),
+    payload: jsonb("payload"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
-  (table) => [
-    index("workflow_run_steps_run_id_idx").on(table.workflowRunId),
-    uniqueIndex("workflow_run_steps_run_step_idx").on(
-      table.workflowRunId,
-      table.stepNumber,
-    ),
+  (t) => [
+    index("workflow_events_negotiation_id_idx").on(t.negotiationId),
+    index("workflow_events_created_at_idx").on(t.createdAt),
   ],
 );
 
-export type Session = typeof sessions.$inferSelect;
-export type NewSession = typeof sessions.$inferInsert;
-export type VercelProjectLink = typeof vercelProjectLinks.$inferSelect;
-export type NewVercelProjectLink = typeof vercelProjectLinks.$inferInsert;
-export type Chat = typeof chats.$inferSelect;
-export type NewChat = typeof chats.$inferInsert;
-export type Share = typeof shares.$inferSelect;
-export type NewShare = typeof shares.$inferInsert;
-export type ChatMessage = typeof chatMessages.$inferSelect;
-export type NewChatMessage = typeof chatMessages.$inferInsert;
-export type ChatRead = typeof chatReads.$inferSelect;
-export type NewChatRead = typeof chatReads.$inferInsert;
-export type WorkflowRun = typeof workflowRuns.$inferSelect;
-export type NewWorkflowRun = typeof workflowRuns.$inferInsert;
-export type WorkflowRunStep = typeof workflowRunSteps.$inferSelect;
-export type NewWorkflowRunStep = typeof workflowRunSteps.$inferInsert;
-export type GitHubInstallation = typeof githubInstallations.$inferSelect;
-export type NewGitHubInstallation = typeof githubInstallations.$inferInsert;
+// ---------------------------------------------------------------------------
+// Inferred types
+// ---------------------------------------------------------------------------
 
-// User preferences for settings
-export const userPreferences = pgTable("user_preferences", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .unique()
-    .references(() => users.id, { onDelete: "cascade" }),
-  defaultModelId: text("default_model_id").default(
-    "anthropic/claude-haiku-4.5",
-  ),
-  defaultSubagentModelId: text("default_subagent_model_id"),
-  defaultSandboxType: text("default_sandbox_type", {
-    enum: ["vercel"],
-  }).default("vercel"),
-  defaultDiffMode: text("default_diff_mode", {
-    enum: ["unified", "split"],
-  }).default("unified"),
-  autoCommitPush: boolean("auto_commit_push").notNull().default(false),
-  autoCreatePr: boolean("auto_create_pr").notNull().default(false),
-  alertsEnabled: boolean("alerts_enabled").notNull().default(true),
-  alertSoundEnabled: boolean("alert_sound_enabled").notNull().default(true),
-  publicUsageEnabled: boolean("public_usage_enabled").notNull().default(false),
-  globalSkillRefs: jsonb("global_skill_refs")
-    .$type<GlobalSkillRef[]>()
-    .notNull()
-    .default([]),
-  modelVariants: jsonb("model_variants")
-    .$type<ModelVariant[]>()
-    .notNull()
-    .default([]),
-  enabledModelIds: jsonb("enabled_model_ids")
-    .$type<string[]>()
-    .notNull()
-    .default([]),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
-
-export type UserPreferences = typeof userPreferences.$inferSelect;
-export type NewUserPreferences = typeof userPreferences.$inferInsert;
-
-// Usage tracking — one row per assistant turn (append-only)
-export const usageEvents = pgTable("usage_events", {
-  id: text("id").primaryKey(),
-  userId: text("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  source: text("source", { enum: ["web"] })
-    .notNull()
-    .default("web"),
-  agentType: text("agent_type", { enum: ["main", "subagent"] })
-    .notNull()
-    .default("main"),
-  provider: text("provider"),
-  modelId: text("model_id"),
-  inputTokens: integer("input_tokens").notNull().default(0),
-  cachedInputTokens: integer("cached_input_tokens").notNull().default(0),
-  outputTokens: integer("output_tokens").notNull().default(0),
-  toolCallCount: integer("tool_call_count").notNull().default(0),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-export type UsageEvent = typeof usageEvents.$inferSelect;
-export type NewUsageEvent = typeof usageEvents.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+export type Negotiation = typeof negotiations.$inferSelect;
+export type NewNegotiation = typeof negotiations.$inferInsert;
+export type Email = typeof emails.$inferSelect;
+export type NewEmail = typeof emails.$inferInsert;
+export type Message = typeof messages.$inferSelect;
+export type NewMessage = typeof messages.$inferInsert;
+export type WorkflowEvent = typeof workflowEvents.$inferSelect;
+export type NewWorkflowEvent = typeof workflowEvents.$inferInsert;

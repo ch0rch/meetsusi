@@ -3,16 +3,6 @@ import { cache } from "react";
 import { auth } from "@/lib/auth/config";
 import type { Session } from "./types";
 
-function extractUsername(user: {
-  name?: string | null;
-  [key: string]: unknown;
-}): string {
-  if (typeof user.username === "string" && user.username) {
-    return user.username;
-  }
-  return user.name ?? "";
-}
-
 export const getServerSession = cache(
   async (): Promise<Session | undefined> => {
     const baSession = await auth.api.getSession({
@@ -25,13 +15,11 @@ export const getServerSession = cache(
 
     return {
       created: baSession.session.createdAt.getTime(),
-      authProvider: "vercel",
       user: {
         id: baSession.user.id,
-        username: extractUsername(baSession.user),
         email: baSession.user.email ?? undefined,
         avatar: baSession.user.image ?? "",
-        name: baSession.user.name ?? undefined,
+        name: baSession.user.name ?? "",
       },
     };
   },

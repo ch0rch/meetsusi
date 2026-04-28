@@ -50,7 +50,7 @@ export function SignedOutHero() {
               ref={heroButtonsRef}
               className="mt-6 flex items-center gap-2 sm:mt-8"
             >
-              <SignInButton size="lg" callbackUrl="/sessions" />
+              <SignInButton size="lg" callbackUrl="/negotiations" />
               <GitHubLink>Open Source</GitHubLink>
             </div>
           </div>

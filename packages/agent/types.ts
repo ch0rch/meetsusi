@@ -1,8 +1,4 @@
-import type { SandboxState } from "@open-agents/sandbox";
-import type { LanguageModel } from "ai";
 import { z } from "zod";
-import type { AgentSandboxContext } from "./open-agent";
-import type { SkillMetadata } from "./skills/types";
 
 export const todoStatusSchema = z.enum(["pending", "in_progress", "completed"]);
 export type TodoStatus = z.infer<typeof todoStatusSchema>;
@@ -15,25 +11,3 @@ export const todoItemSchema = z.object({
   ),
 });
 export type TodoItem = z.infer<typeof todoItemSchema>;
-
-export interface AgentContext {
-  sandbox: AgentSandboxContext;
-  skills?: SkillMetadata[];
-  model: LanguageModel;
-  subagentModel?: LanguageModel;
-}
-
-export interface SandboxExecutionContext {
-  sandbox: AgentSandboxContext;
-}
-
-export function isSandboxState(value: unknown): value is SandboxState {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "type" in value &&
-    value.type === "vercel"
-  );
-}
-
-export const EVICTION_THRESHOLD_BYTES = 80 * 1024;

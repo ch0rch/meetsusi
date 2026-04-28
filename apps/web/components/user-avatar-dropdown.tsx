@@ -32,10 +32,7 @@ export function UserAvatarDropdown() {
         >
           <Avatar className="h-8 w-8">
             {session.user.avatar ? (
-              <AvatarImage
-                src={session.user.avatar}
-                alt={session.user.username}
-              />
+              <AvatarImage src={session.user.avatar} alt={session.user.name} />
             ) : null}
             <AvatarFallback className="bg-black" />
           </Avatar>
