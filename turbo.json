@@ -4,21 +4,15 @@
     "build": {
       "dependsOn": ["^build"],
       "env": [
-        "BETTER_AUTH_SECRET",
-        "BLOB_READ_WRITE_TOKEN",
-        "ENCRYPTION_KEY",
-        "GITHUB_CLIENT_SECRET",
-        "JWE_SECRET",
-        "KV_REST_API_READ_ONLY_TOKEN",
-        "KV_REST_API_TOKEN",
-        "KV_REST_API_URL",
-        "KV_URL",
-        "NEXT_PUBLIC_AUTH_PROVIDERS",
-        "NEXT_PUBLIC_GITHUB_CLIENT_ID",
-        "NEXT_PUBLIC_VERCEL_APP_CLIENT_ID",
+        "ANTHROPIC_API_KEY",
+        "CLOUDFLARE_ACCOUNT_ID",
+        "CLOUDFLARE_API_TOKEN",
+        "CLOUDFLARE_EMAIL_DOMAIN",
+        "CLOUDFLARE_WEBHOOK_SECRET",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "NEXT_PUBLIC_SUPABASE_URL",
         "POSTGRES_URL",
-        "REDIS_URL",
-        "VERCEL_APP_CLIENT_SECRET"
+        "TAVILY_API_KEY"
       ],
       "outputs": ["dist/**"]
     },
