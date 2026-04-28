@@ -4,11 +4,7 @@ import {
   convertToModelMessages,
   type UIMessage,
 } from "ai";
-import {
-  gateway,
-  buildSystemPrompt,
-  askUserQuestionTool,
-} from "@open-agents/agent";
+import { gateway, buildSystemPrompt } from "@open-agents/agent";
 import { getServerSession } from "@/lib/session/get-server-session";
 import { createSusiTools } from "@/lib/agent/chat-tools";
 
@@ -41,10 +37,7 @@ export async function POST(req: Request): Promise<Response> {
     model: gateway("anthropic/claude-sonnet-4-6"),
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
-    tools: {
-      ask_user_question: askUserQuestionTool,
-      ...susiTools,
-    },
+    tools: susiTools,
     stopWhen: stepCountIs(20),
     temperature: 0.7,
   });
