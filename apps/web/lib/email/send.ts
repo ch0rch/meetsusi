@@ -13,45 +13,37 @@ interface SendEmailResult {
 export async function sendNegotiationEmail(
   params: SendEmailParams,
 ): Promise<SendEmailResult> {
-  const accountId = process.env.CLOUDFLARE_ACCOUNT_ID;
-  const apiToken = process.env.CLOUDFLARE_API_TOKEN;
+  const apiKey = process.env.RESEND_API_KEY;
 
-  if (!accountId || !apiToken) {
-    throw new Error("Missing Cloudflare email configuration");
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY is not configured");
   }
 
-  const payload = {
-    from: { email: params.from },
-    to: [{ email: params.to }],
+  const payload: Record<string, unknown> = {
+    from: params.from,
+    to: [params.to],
     subject: params.subject,
-    content: [{ type: "text/plain", value: params.body }],
-    // Cloudflare Email Service doesn't accept arbitrary headers in the REST API.
-    // Threading (Message-ID, In-Reply-To, References) is persisted in our DB
-    // for reference; we embed them as X- prefixed headers where supported.
-    ...(params.headers && {
-      reply_to: params.headers["Reply-To"]
-        ? { email: params.headers["Reply-To"] }
-        : undefined,
-    }),
+    text: params.body,
   };
 
-  const response = await fetch(
-    `https://api.cloudflare.com/client/v4/accounts/${accountId}/email/sending/send`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiToken}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+  if (params.headers?.["Reply-To"]) {
+    payload["reply_to"] = params.headers["Reply-To"];
+  }
+
+  const response = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
     },
-  );
+    body: JSON.stringify(payload),
+  });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(`Cloudflare email send failed: ${response.status} ${text}`);
+    throw new Error(`Resend email send failed: ${response.status} ${text}`);
   }
 
-  const data = (await response.json()) as { result: { id: string } };
-  return { id: data.result.id };
+  const data = (await response.json()) as { id: string };
+  return { id: data.id };
 }

@@ -5,10 +5,9 @@
       "dependsOn": ["^build"],
       "env": [
         "ANTHROPIC_API_KEY",
-        "CLOUDFLARE_ACCOUNT_ID",
-        "CLOUDFLARE_API_TOKEN",
         "CLOUDFLARE_EMAIL_DOMAIN",
         "CLOUDFLARE_WEBHOOK_SECRET",
+        "RESEND_API_KEY",
         "NEXT_PUBLIC_SUPABASE_ANON_KEY",
         "NEXT_PUBLIC_SUPABASE_URL",
         "POSTGRES_URL",
