@@ -1,1 +1,1 @@
-DROP INDEX "negotiations_susi_email_idx";
+DROP INDEX IF EXISTS "negotiations_susi_email_idx";
