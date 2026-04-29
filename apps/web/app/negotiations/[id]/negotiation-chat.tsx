@@ -2,6 +2,7 @@ import type { UIMessage } from "ai";
 import { SusiChat } from "@/components/susi-chat";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { DealInfoPanel } from "@/components/dashboard/deal-info-panel";
+import { DealInfoSheet } from "@/components/dashboard/deal-info-sheet";
 import type { Negotiation } from "@/lib/db/schema";
 
 function buildIntro(negotiation: Negotiation): UIMessage {
@@ -43,6 +44,7 @@ export function NegotiationChat({ negotiation }: { negotiation: Negotiation }) {
             ) : null}
           </div>
           <StatusBadge status={negotiation.status} className="shrink-0" />
+          <DealInfoSheet negotiation={negotiation} />
         </div>
       </header>
 
