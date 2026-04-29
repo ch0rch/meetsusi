@@ -4,6 +4,7 @@ import { emails, negotiations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { sendNegotiationEmail } from "@/lib/email/send";
 import { buildOutboundHeaders } from "@/lib/email/threading";
+import { updateNegotiation } from "@/lib/db/negotiations";
 
 export async function sendApprovedEmailStep(
   emailId: string,
@@ -50,6 +51,8 @@ export async function sendApprovedEmailStep(
       messageId,
     })
     .where(eq(emails.id, emailId));
+
+  await updateNegotiation(email.negotiationId, { status: "waiting_reply" });
 
   return { messageId };
 }

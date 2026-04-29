@@ -7,6 +7,7 @@ import {
 import { gateway, buildSystemPrompt } from "@open-agents/agent";
 import { getServerSession } from "@/lib/session/get-server-session";
 import { createSusiTools } from "@/lib/agent/chat-tools";
+import { saveMessage } from "@/lib/db/negotiations";
 
 export const maxDuration = 60;
 
@@ -36,6 +37,24 @@ export async function POST(req: Request): Promise<Response> {
   });
   const susiTools = createSusiTools(userId);
 
+  // Persist the new user message (last in array) before streaming
+  const lastMsg = messages[messages.length - 1];
+  if (negotiationId && lastMsg?.role === "user") {
+    const userText = lastMsg.parts
+      ?.filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text")
+      .map((p) => p.text)
+      .join("") ?? "";
+    if (userText) {
+      await saveMessage({
+        negotiationId,
+        userId,
+        role: "user",
+        content: userText,
+        parts: lastMsg.parts ?? [],
+      });
+    }
+  }
+
   const result = streamText({
     model: gateway("anthropic/claude-sonnet-4-6"),
     system: systemPrompt,
@@ -43,6 +62,17 @@ export async function POST(req: Request): Promise<Response> {
     tools: susiTools,
     stopWhen: stepCountIs(20),
     temperature: 0.7,
+    onFinish: async ({ text }) => {
+      if (negotiationId && text) {
+        await saveMessage({
+          negotiationId,
+          userId,
+          role: "assistant",
+          content: text,
+          parts: [{ type: "text", text }],
+        });
+      }
+    },
   });
 
   return result.toUIMessageStreamResponse();

@@ -26,8 +26,14 @@ function buildIntro(negotiation: Negotiation): UIMessage {
   };
 }
 
-export function NegotiationChat({ negotiation }: { negotiation: Negotiation }) {
-  const intro = buildIntro(negotiation);
+interface NegotiationChatProps {
+  negotiation: Negotiation;
+  history: UIMessage[];
+}
+
+export function NegotiationChat({ negotiation, history }: NegotiationChatProps) {
+  const initialMessages: UIMessage[] =
+    history.length > 0 ? history : [buildIntro(negotiation)];
 
   return (
     <div className="flex h-full flex-col">
@@ -51,7 +57,7 @@ export function NegotiationChat({ negotiation }: { negotiation: Negotiation }) {
       <div className="flex flex-1 overflow-hidden">
         <SusiChat
           body={{ negotiationId: negotiation.id }}
-          initialMessages={[intro]}
+          initialMessages={initialMessages}
           placeholder="Message Susi…"
         />
         <DealInfoPanel negotiation={negotiation} />
