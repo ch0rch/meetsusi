@@ -33,7 +33,8 @@ export async function draftCounterOfferStep(input: {
     model: gateway("anthropic/claude-sonnet-4-6"),
     system: `You are Susi, a professional negotiation assistant. Draft a polite but firm counter-offer email.
 Never reveal you are an AI. Write in first person as the user's representative.
-Be warm but firm. Imply alternatives without threatening. Keep it brief (3-5 sentences).`,
+Be warm but firm. Imply alternatives without threatening. Keep it brief (3-5 sentences).
+Write the email in ${negotiation.language}.`,
     prompt: `Context:
 - What we're negotiating: ${negotiation.title}
 - Current price: ${negotiation.currentPrice} ${negotiation.currency}
@@ -96,7 +97,7 @@ export async function draftFollowUpStep(
   const { text } = await generateText({
     model: gateway("anthropic/claude-haiku-4.5"),
     system: `You are Susi. Draft a brief, friendly follow-up email for an unanswered price negotiation.
-Keep it to 2-3 sentences. Warm and professional.`,
+Keep it to 2-3 sentences. Warm and professional. Write in ${negotiation.language}.`,
     prompt: `Negotiation: ${negotiation.title}. We haven't heard back in a week. Draft a gentle follow-up.`,
   });
 

@@ -1,0 +1,1 @@
+ALTER TABLE "negotiations" ADD COLUMN "language" text DEFAULT 'English' NOT NULL;

@@ -68,6 +68,9 @@ export const negotiations = pgTable(
     vendorName: text("vendor_name"),
     vendorEmail: text("vendor_email"),
 
+    // Language for all outbound emails (e.g. "Spanish", "English", "Portuguese")
+    language: text("language").notNull().default("English"),
+
     // Status
     status: negotiationStatusEnum("status").notNull().default("researching"),
     finalPrice: numeric("final_price"),

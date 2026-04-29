@@ -121,6 +121,12 @@ export function createSusiTools(userId: string) {
       current_price: z.number().optional().describe("Current price being paid"),
       target_price: z.number().optional().describe("Desired target price"),
       currency: z.string().default("USD"),
+      language: z
+        .string()
+        .default("English")
+        .describe(
+          "Language for all outbound emails, e.g. 'Spanish', 'English', 'Portuguese'",
+        ),
       context: z
         .string()
         .optional()
@@ -135,6 +141,7 @@ export function createSusiTools(userId: string) {
         current_price,
         target_price,
         currency,
+        language,
         context,
       } = input;
       const id = nanoid();
@@ -150,6 +157,7 @@ export function createSusiTools(userId: string) {
         currentPrice: current_price?.toString(),
         targetPrice: target_price?.toString(),
         currency,
+        language,
         context,
         status: "researching",
         susiEmail,
@@ -193,6 +201,7 @@ Context:
 - Additional context: ${negotiation.context ?? "none"}
 
 Guidelines:
+- Write the email in ${negotiation.language}
 - Do NOT say you are negotiating or that you are an AI
 - Do NOT ask for a discount directly
 - Express genuine interest in continuing / closing
