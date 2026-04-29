@@ -92,7 +92,6 @@ export const negotiations = pgTable(
   (t) => [
     index("negotiations_user_id_idx").on(t.userId),
     index("negotiations_status_idx").on(t.status),
-    uniqueIndex("negotiations_susi_email_idx").on(t.susiEmail),
     index("negotiations_workflow_run_idx").on(t.workflowRunId),
   ],
 );

@@ -1,0 +1,1 @@
+DROP INDEX "negotiations_susi_email_idx";
