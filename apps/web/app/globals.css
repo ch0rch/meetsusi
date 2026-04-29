@@ -6,6 +6,28 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-susi-midnight: #010120;
+  --color-susi-lavender: #bdbbff;
+  --color-susi-magenta: #ef2cc1;
+  --color-susi-orange: #fc4c02;
+  --color-susi-pastel-pink: #fde4f2;
+  --color-susi-pastel-blue: #e0e6ff;
+  --shadow-susi: 0 4px 10px rgba(1, 1, 32, 0.1);
+  --shadow-susi-lg: 0 24px 60px rgba(1, 1, 32, 0.12);
+  --tracking-display-hero: -0.06em;
+  --tracking-display-section: -0.025em;
+  --tracking-mono-label: 0.08em;
+  /* Status semantic colors */
+  --color-susi-status-researching: oklch(0.77 0.13 84);
+  --color-susi-status-awaiting: oklch(0.72 0.16 52);
+  --color-susi-status-negotiating: oklch(0.62 0.17 243);
+  --color-susi-status-waiting: oklch(0.68 0.12 243);
+  --color-susi-status-won: oklch(0.65 0.17 148);
+  --color-susi-status-lost: oklch(0.58 0.19 25);
+  --color-susi-status-cancelled: oklch(0.55 0.01 286);
+}
+
+@theme inline {
   --breakpoint-sidebar: 900px;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -336,6 +358,59 @@
   display: none;
   width: 0;
   height: 0;
+}
+
+@layer components {
+  .susi-bg-pastel {
+    background: linear-gradient(135deg, #fde4f2 0%, #e9e4ff 55%, #dce6ff 100%);
+  }
+  .dark .susi-bg-pastel {
+    background:
+      linear-gradient(
+        135deg,
+        rgba(253, 228, 242, 0.06) 0%,
+        rgba(189, 187, 255, 0.08) 55%,
+        rgba(220, 230, 255, 0.06) 100%
+      ),
+      #010120;
+  }
+  .susi-display-hero {
+    letter-spacing: -0.06em;
+    line-height: 1.03;
+    font-weight: 500;
+  }
+  .susi-display-section {
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+    font-weight: 500;
+  }
+  .susi-mono-label {
+    font-family: var(--font-mono);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+  }
+  .susi-card-light {
+    background: #ffffff;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(1, 1, 32, 0.1);
+  }
+  .dark .susi-card-light {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .susi-card-dark {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+  }
+  @media (max-width: 640px) {
+    .susi-display-hero {
+      letter-spacing: -0.04em;
+    }
+  }
 }
 
 @layer base {

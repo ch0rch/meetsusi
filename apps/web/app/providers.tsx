@@ -14,6 +14,7 @@ import { Toaster } from "sonner";
 import { SWRConfig } from "swr";
 import { createSupabaseBrowserClient } from "@/lib/supabase/client";
 import { FetchError } from "@/lib/swr";
+import { I18nProvider } from "@/lib/i18n/provider";
 
 const THEME_STORAGE_KEY = "meetsusi-theme";
 const DARK_MODE_MEDIA_QUERY = "(prefers-color-scheme: dark)";
@@ -111,7 +112,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeContext.Provider value={themeContextValue}>
-      <SWRConfig value={{ onError: handleError }}>{children}</SWRConfig>
+      <I18nProvider>
+        <SWRConfig value={{ onError: handleError }}>{children}</SWRConfig>
+      </I18nProvider>
       <Toaster theme={resolvedTheme} />
     </ThemeContext.Provider>
   );

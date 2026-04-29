@@ -1,7 +1,5 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { UIMessage } from "ai";
 import { SusiChat } from "@/components/susi-chat";
@@ -21,18 +19,15 @@ export default function NewNegotiationPage() {
   const router = useRouter();
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
-      <header className="shrink-0 border-b border-border px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center gap-4">
-          <Link
-            href="/negotiations"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
-          <p className="font-medium">New negotiation</p>
-        </div>
-      </header>
+    <div className="flex h-full flex-col">
+      <div className="shrink-0 border-b border-border px-6 py-4">
+        <p className="font-medium text-black dark:text-white">
+          New negotiation
+        </p>
+        <p className="mt-0.5 text-xs text-black/50 dark:text-white/45">
+          Tell Susi what you want to negotiate
+        </p>
+      </div>
 
       <SusiChat
         initialMessages={[GREETING]}

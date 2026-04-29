@@ -18,7 +18,10 @@ type SignInButtonProps = {
   callbackUrl?: string;
 } & Omit<ComponentProps<typeof Button>, "onClick">;
 
-export function SignInButton({ callbackUrl = "/negotiations", ...props }: SignInButtonProps) {
+export function SignInButton({
+  callbackUrl = "/negotiations",
+  ...props
+}: SignInButtonProps) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -79,7 +82,11 @@ export function SignInButton({ callbackUrl = "/negotiations", ...props }: SignIn
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
               autoFocus
             />
-            <Button onClick={handleSend} disabled={!email || loading} className="w-full">
+            <Button
+              onClick={handleSend}
+              disabled={!email || loading}
+              className="w-full"
+            >
               {loading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               ) : (
@@ -92,6 +99,7 @@ export function SignInButton({ callbackUrl = "/negotiations", ...props }: SignIn
           <div className="pt-2 text-center text-sm text-muted-foreground">
             Didn&apos;t receive it? Check your spam folder or{" "}
             <button
+              type="button"
               className="underline hover:no-underline"
               onClick={() => setSent(false)}
             >

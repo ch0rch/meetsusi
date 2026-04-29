@@ -14,6 +14,17 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+const langInitializationScript = `
+(() => {
+  const key = "meetsusi-lang";
+  const stored = localStorage.getItem(key);
+  const lang = stored === "en" || stored === "es"
+    ? stored
+    : navigator.language.startsWith("es") ? "es" : "en";
+  document.documentElement.dataset.lang = lang;
+})();
+`;
+
 const themeInitializationScript = `
 (() => {
   const storageKey = "meetsusi-theme";
@@ -70,6 +81,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans overflow-x-hidden antialiased`}
       >
+        <script
+          dangerouslySetInnerHTML={{ __html: langInitializationScript }}
+        />
         <script
           dangerouslySetInnerHTML={{ __html: themeInitializationScript }}
         />

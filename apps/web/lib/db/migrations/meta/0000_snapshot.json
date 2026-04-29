@@ -166,12 +166,8 @@
           "name": "emails_negotiation_id_negotiations_id_fk",
           "tableFrom": "emails",
           "tableTo": "negotiations",
-          "columnsFrom": [
-            "negotiation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["negotiation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -181,16 +177,12 @@
         "emails_message_id_unique": {
           "name": "emails_message_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "message_id"
-          ]
+          "columns": ["message_id"]
         },
         "emails_external_id_unique": {
           "name": "emails_external_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "external_id"
-          ]
+          "columns": ["external_id"]
         }
       },
       "policies": {},
@@ -256,9 +248,7 @@
         "market_research_cache_cache_key_unique": {
           "name": "market_research_cache_cache_key_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "cache_key"
-          ]
+          "columns": ["cache_key"]
         }
       },
       "policies": {},
@@ -351,12 +341,8 @@
           "name": "messages_negotiation_id_negotiations_id_fk",
           "tableFrom": "messages",
           "tableTo": "negotiations",
-          "columnsFrom": [
-            "negotiation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["negotiation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -575,9 +561,7 @@
         "negotiations_susi_email_unique": {
           "name": "negotiations_susi_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "susi_email"
-          ]
+          "columns": ["susi_email"]
         }
       },
       "policies": {},
@@ -669,12 +653,8 @@
           "name": "workflow_events_negotiation_id_negotiations_id_fk",
           "tableFrom": "workflow_events",
           "tableTo": "negotiations",
-          "columnsFrom": [
-            "negotiation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["negotiation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -690,10 +670,7 @@
     "public.email_direction": {
       "name": "email_direction",
       "schema": "public",
-      "values": [
-        "outbound",
-        "inbound"
-      ]
+      "values": ["outbound", "inbound"]
     },
     "public.email_status": {
       "name": "email_status",
@@ -710,21 +687,12 @@
     "public.message_role": {
       "name": "message_role",
       "schema": "public",
-      "values": [
-        "user",
-        "assistant"
-      ]
+      "values": ["user", "assistant"]
     },
     "public.negotiation_category": {
       "name": "negotiation_category",
       "schema": "public",
-      "values": [
-        "saas",
-        "auto",
-        "real_estate",
-        "high_ticket",
-        "other"
-      ]
+      "values": ["saas", "auto", "real_estate", "high_ticket", "other"]
     },
     "public.negotiation_status": {
       "name": "negotiation_status",

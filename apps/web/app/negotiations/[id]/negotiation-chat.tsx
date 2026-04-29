@@ -1,20 +1,8 @@
-"use client";
-
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import type { UIMessage } from "ai";
 import { SusiChat } from "@/components/susi-chat";
+import { StatusBadge } from "@/components/dashboard/status-badge";
+import { DealInfoPanel } from "@/components/dashboard/deal-info-panel";
 import type { Negotiation } from "@/lib/db/schema";
-
-const STATUS_LABELS: Record<string, string> = {
-  researching: "Researching",
-  awaiting_approval: "Needs your approval",
-  negotiating: "Negotiating",
-  waiting_reply: "Waiting for reply",
-  won: "Won",
-  lost: "Lost",
-  cancelled: "Cancelled",
-};
 
 function buildIntro(negotiation: Negotiation): UIMessage {
   let text = `Hi! I'm working on your negotiation with **${negotiation.vendorName ?? "the vendor"}** for **${negotiation.title}**.`;
@@ -41,30 +29,31 @@ export function NegotiationChat({ negotiation }: { negotiation: Negotiation }) {
   const intro = buildIntro(negotiation);
 
   return (
-    <div className="flex h-screen flex-col bg-background text-foreground">
+    <div className="flex h-full flex-col">
       <header className="shrink-0 border-b border-border px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center gap-4">
-          <Link
-            href="/negotiations"
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Link>
+        <div className="flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
-            <p className="truncate font-medium">{negotiation.title}</p>
-            <p className="text-xs text-muted-foreground">
-              {negotiation.vendorName ? `${negotiation.vendorName} · ` : ""}
-              {STATUS_LABELS[negotiation.status] ?? negotiation.status}
+            <p className="truncate font-medium text-black dark:text-white">
+              {negotiation.title}
             </p>
+            {negotiation.vendorName ? (
+              <p className="mt-0.5 text-xs text-black/50 dark:text-white/45">
+                {negotiation.vendorName}
+              </p>
+            ) : null}
           </div>
+          <StatusBadge status={negotiation.status} className="shrink-0" />
         </div>
       </header>
 
-      <SusiChat
-        body={{ negotiationId: negotiation.id }}
-        initialMessages={[intro]}
-        placeholder="Message Susi…"
-      />
+      <div className="flex flex-1 overflow-hidden">
+        <SusiChat
+          body={{ negotiationId: negotiation.id }}
+          initialMessages={[intro]}
+          placeholder="Message Susi…"
+        />
+        <DealInfoPanel negotiation={negotiation} />
+      </div>
     </div>
   );
 }
