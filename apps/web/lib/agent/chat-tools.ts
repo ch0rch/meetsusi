@@ -8,6 +8,7 @@ import {
   createEmail,
   getNegotiationByIdForUser,
   getEmailById,
+  listEmailsForNegotiation,
   isFirstEmailOfNegotiation,
   updateEmail,
   updateNegotiation,
@@ -299,6 +300,47 @@ Write ONLY the email body (no subject line, no greeting header — just the body
   });
 
   // ---------------------------------------------------------------------------
+  // show_pending_draft
+  // ---------------------------------------------------------------------------
+
+  const show_pending_draft = tool({
+    description:
+      "Find and show the pending email draft awaiting user approval for a negotiation. Call this when the user wants to see, review, or approve a draft.",
+    inputSchema: z.object({
+      negotiation_id: z.string().describe("ID of the negotiation"),
+    }),
+    execute: async (input) => {
+      const { negotiation_id } = input;
+      const negotiation = await getNegotiationByIdForUser(
+        negotiation_id,
+        userId,
+      );
+      if (!negotiation) throw new Error("Negotiation not found");
+
+      const allEmails = await listEmailsForNegotiation(negotiation_id);
+      const draft = allEmails.find((e) => e.status === "pending_approval");
+
+      if (!draft) {
+        return {
+          found: false,
+          message: "No pending draft found for this negotiation.",
+        };
+      }
+
+      return {
+        found: true,
+        email_id: draft.id,
+        subject: draft.subject,
+        body: draft.body,
+        to: draft.toEmail,
+        from: draft.fromEmail,
+        message:
+          "Here's the pending draft. Review it and let me know if you approve or want changes.",
+      };
+    },
+  });
+
+  // ---------------------------------------------------------------------------
   // get_negotiation_status
   // ---------------------------------------------------------------------------
 
@@ -340,6 +382,7 @@ Write ONLY the email body (no subject line, no greeting header — just the body
     research_market_price,
     start_negotiation,
     draft_first_email,
+    show_pending_draft,
     approve_and_dispatch,
     get_negotiation_status,
   };

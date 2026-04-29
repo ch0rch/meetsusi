@@ -5,6 +5,7 @@ import { db } from "@/lib/db/client";
 import { emails, negotiations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { gateway } from "@open-agents/agent";
+import { updateNegotiation } from "@/lib/db/negotiations";
 import type { ReplyClassification } from "./classify-reply";
 
 export async function draftCounterOfferStep(input: {
@@ -74,6 +75,9 @@ Draft a counter-offer email body (just the body, no subject line):`,
     .returning();
 
   if (!draft) throw new FatalError("Failed to create counter-offer draft");
+
+  await updateNegotiation(input.negotiationId, { status: "awaiting_approval" });
+
   return draft.id;
 }
 
