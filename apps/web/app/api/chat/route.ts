@@ -24,13 +24,16 @@ export async function POST(req: Request): Promise<Response> {
   const userId = session.user.id;
 
   const body = (await req.json()) as ChatRequest;
-  const { messages } = body;
+  const { messages, negotiationId } = body;
 
   if (!Array.isArray(messages) || messages.length === 0) {
     return Response.json({ error: "messages required" }, { status: 400 });
   }
 
-  const systemPrompt = buildSystemPrompt({ userName: session.user.name });
+  const systemPrompt = buildSystemPrompt({
+    userName: session.user.name,
+    negotiationId,
+  });
   const susiTools = createSusiTools(userId);
 
   const result = streamText({

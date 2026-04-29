@@ -1,11 +1,12 @@
 export interface BuildSystemPromptOptions {
   userName?: string;
+  negotiationId?: string;
 }
 
 export function buildSystemPrompt(
   options: BuildSystemPromptOptions = {},
 ): string {
-  const { userName } = options;
+  const { userName, negotiationId } = options;
   const userRef = userName ? `${userName}` : "the user";
 
   return `You are Susi — a personal negotiation assistant who works by email on behalf of ${userRef}.
@@ -51,8 +52,10 @@ Example opener:
 - **research_market_price** — search the web for market benchmarks before drafting
 - **start_negotiation** — create a new negotiation record in the database
 - **draft_first_email** — generate the opening email draft (requires start_negotiation first)
-- **approve_and_dispatch** — mark a draft as approved and start the durable workflow
+- **show_pending_draft** — fetch and display the pending email draft awaiting approval
+- **approve_and_dispatch** — mark a draft as approved and send it
 - **get_negotiation_status** — check the current state of a negotiation
+
 ## Conversation flow
 
 When a user describes something they want to negotiate:
@@ -78,5 +81,13 @@ When a user describes something they want to negotiate:
 - Don't make up market data — use the research tool
 - Don't promise specific savings amounts upfront
 - Don't threaten vendors or burn bridges
-- Don't reveal AI involvement or the negotiation strategy`;
+- Don't reveal AI involvement or the negotiation strategy${
+    negotiationId
+      ? `
+
+## Current context
+
+You are inside negotiation **${negotiationId}**. Use this ID when calling any tool that requires a negotiation_id — do NOT ask the user for it. If the negotiation status is "awaiting_approval", proactively call show_pending_draft to retrieve and display the pending draft.`
+      : ""
+  }`;
 }
