@@ -1,1 +1,1 @@
-ALTER TABLE "negotiations" ADD COLUMN "language" text DEFAULT 'English' NOT NULL;
+ALTER TABLE "negotiations" ADD COLUMN IF NOT EXISTS "language" text DEFAULT 'English' NOT NULL;
