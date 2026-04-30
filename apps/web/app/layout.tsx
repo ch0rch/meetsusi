@@ -85,9 +85,6 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Meet Susi" }],
   creator: "Meet Susi",
-  icons: {
-    icon: "/favicon.ico",
-  },
   openGraph: {
     type: "website",
     siteName: "Meet Susi",
