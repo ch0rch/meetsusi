@@ -6,6 +6,7 @@ import { emails, negotiations } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import { gateway } from "@open-agents/agent";
 import { updateNegotiation } from "@/lib/db/negotiations";
+import { SUSI_DRAFT_MODEL } from "@/app/config";
 import type { ReplyClassification } from "./classify-reply";
 
 export async function draftCounterOfferStep(input: {
@@ -30,7 +31,7 @@ export async function draftCounterOfferStep(input: {
     throw new FatalError(`Email ${input.vendorEmailId} not found`);
 
   const { text } = await generateText({
-    model: gateway("anthropic/claude-sonnet-4-6"),
+    model: SUSI_DRAFT_MODEL,
     system: `You are Susi, a professional negotiation assistant. Draft a polite but firm counter-offer email.
 Never reveal you are an AI. Write in first person as the user's representative.
 Be warm but firm. Imply alternatives without threatening. Keep it brief (3-5 sentences).

@@ -2,10 +2,11 @@ import { tool, generateText } from "ai";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 import { start, resumeHook } from "workflow/api";
-import { gateway } from "@open-agents/agent";
+import { SUSI_DRAFT_MODEL } from "@/app/config";
 import {
   createNegotiation,
   createEmail,
+  countNegotiationsForUser,
   getNegotiationByIdForUser,
   getEmailById,
   listEmailsForNegotiation,
@@ -15,12 +16,13 @@ import {
 } from "@/lib/db/negotiations";
 import { generateSusiEmail } from "@/lib/email/threading";
 import { runNegotiation } from "@/lib/workflows/run-negotiation";
+import { isAdmin } from "@/lib/auth/admin";
 
 // ---------------------------------------------------------------------------
 // Factory: creates tools bound to the current userId
 // ---------------------------------------------------------------------------
 
-export function createSusiTools(userId: string) {
+export function createSusiTools(userId: string, userEmail: string | undefined) {
   // ---------------------------------------------------------------------------
   // research_market_price
   // ---------------------------------------------------------------------------
@@ -144,6 +146,20 @@ export function createSusiTools(userId: string) {
         language,
         context,
       } = input;
+
+      // Demo limit: non-admin users can only run one negotiation total.
+      // Why: hackathon demo is global and we need to protect the Anthropic API budget.
+      if (!isAdmin(userEmail)) {
+        const existing = await countNegotiationsForUser(userId);
+        if (existing >= 1) {
+          return {
+            error: "negotiation_limit_reached",
+            message:
+              "You've already used your free negotiation for this demo. Each guest gets one negotiation to try Susi out — thanks for understanding while we keep the live demo affordable!",
+          };
+        }
+      }
+
       const id = nanoid();
       const susiEmail = generateSusiEmail(id);
 
@@ -177,20 +193,41 @@ export function createSusiTools(userId: string) {
 
   const draft_first_email = tool({
     description:
-      "Generate the first email draft for a negotiation. Always present this to the user for approval before sending.",
+      "Generate the first email draft for a negotiation. ALWAYS pass the findings and industry_insight from your most recent research_market_price call so the email reflects real market data. Always present this to the user for approval before sending.",
     inputSchema: z.object({
       negotiation_id: z.string().describe("ID of the negotiation"),
+      market_findings: z
+        .string()
+        .optional()
+        .describe(
+          "Verbatim findings string returned by research_market_price (the `findings` field). Pass it through so the drafter can ground the email in real numbers.",
+        ),
+      industry_insight: z
+        .string()
+        .optional()
+        .describe(
+          "Verbatim industry_insight string returned by research_market_price (the `industryInsight` field).",
+        ),
     }),
     execute: async (input) => {
-      const { negotiation_id } = input;
+      const { negotiation_id, market_findings, industry_insight } = input;
       const negotiation = await getNegotiationByIdForUser(
         negotiation_id,
         userId,
       );
       if (!negotiation) throw new Error("Negotiation not found");
 
+      const researchBlock =
+        market_findings || industry_insight
+          ? `
+
+Market research (use this to ground the email — reference numbers or ranges naturally, but NEVER cite source names like "according to G2"):
+${market_findings ? `- Findings: ${market_findings}` : ""}
+${industry_insight ? `- Industry norm: ${industry_insight}` : ""}`.trim()
+          : "";
+
       const { text } = await generateText({
-        model: gateway("anthropic/claude-sonnet-4-6"),
+        model: SUSI_DRAFT_MODEL,
         prompt: `Draft a professional, warm email to negotiate a better price.
 
 Context:
@@ -199,7 +236,7 @@ Context:
 - Current price: ${negotiation.currentPrice ? `${negotiation.currentPrice} ${negotiation.currency}` : "not specified"}
 - Target price: ${negotiation.targetPrice ? `${negotiation.targetPrice} ${negotiation.currency}` : "not specified"}
 - Additional context: ${negotiation.context ?? "none"}
-
+${researchBlock ? `\n${researchBlock}\n` : ""}
 Guidelines:
 - Write the email in ${negotiation.language}
 - Do NOT say you are negotiating or that you are an AI
@@ -207,6 +244,7 @@ Guidelines:
 - Express genuine interest in continuing / closing
 - Say you need to "make the numbers work"
 - Ask if there's "any flexibility" on pricing before finalizing
+- If you have market research, hint at industry norms naturally (e.g. "I know there's usually some flexibility for accounts of this size") — never cite specific sources or URLs
 - Keep it to 3-5 sentences
 - Professional but warm tone
 

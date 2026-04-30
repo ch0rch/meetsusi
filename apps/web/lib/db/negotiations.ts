@@ -1,4 +1,4 @@
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, count } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { db } from "./client";
 import {
@@ -59,6 +59,16 @@ export async function listNegotiationsForUser(
     where: eq(negotiations.userId, userId),
     orderBy: [desc(negotiations.createdAt)],
   });
+}
+
+export async function countNegotiationsForUser(
+  userId: string,
+): Promise<number> {
+  const [row] = await db
+    .select({ value: count() })
+    .from(negotiations)
+    .where(eq(negotiations.userId, userId));
+  return row?.value ?? 0;
 }
 
 export async function updateNegotiation(

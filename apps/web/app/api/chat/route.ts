@@ -4,10 +4,11 @@ import {
   convertToModelMessages,
   type UIMessage,
 } from "ai";
-import { gateway, buildSystemPrompt } from "@open-agents/agent";
+import { buildSystemPrompt } from "@open-agents/agent";
 import { getServerSession } from "@/lib/session/get-server-session";
 import { createSusiTools } from "@/lib/agent/chat-tools";
 import { saveMessage } from "@/lib/db/negotiations";
+import { SUSI_CHAT_MODEL } from "@/app/config";
 
 export const maxDuration = 60;
 
@@ -35,7 +36,7 @@ export async function POST(req: Request): Promise<Response> {
     userName: session.user.name,
     negotiationId,
   });
-  const susiTools = createSusiTools(userId);
+  const susiTools = createSusiTools(userId, session.user.email);
 
   // Persist the new user message (last in array) before streaming
   const lastMsg = messages[messages.length - 1];
@@ -56,7 +57,7 @@ export async function POST(req: Request): Promise<Response> {
   }
 
   const result = streamText({
-    model: gateway("anthropic/claude-sonnet-4-6"),
+    model: SUSI_CHAT_MODEL,
     system: systemPrompt,
     messages: await convertToModelMessages(messages),
     tools: susiTools,
