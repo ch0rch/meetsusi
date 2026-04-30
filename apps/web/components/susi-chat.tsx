@@ -109,7 +109,7 @@ export function SusiChat({
       </div>
 
       {suggestions && suggestions.length > 0 ? (
-        <div className="shrink-0 border-t border-border px-6 pt-3">
+        <div className="shrink-0 border-t border-border px-6 py-3">
           <div className="mx-auto flex max-w-3xl flex-wrap gap-2">
             {suggestions.map((s) => (
               <PromptSuggestion
