@@ -12,7 +12,7 @@ export function SusiFooter() {
       <div className="mx-auto max-w-[1320px] px-6 pt-16 pb-10">
         <div className="mb-12 overflow-hidden">
           <p
-            className="select-none font-mono font-bold text-white/8 leading-none"
+            className="select-none font-mono font-bold text-white/20 leading-none"
             style={{
               fontSize: "clamp(4rem, 18vw, 14rem)",
               letterSpacing: "-0.06em",
