@@ -1,5 +1,6 @@
 "use client";
 
+import { AlertCircle } from "lucide-react";
 import { isTextUIPart, isToolUIPart } from "ai";
 import type { UIMessage } from "ai";
 import { Markdown } from "@/components/ui/markdown";
@@ -11,10 +12,19 @@ const TOOL_LABELS: Record<string, string> = {
   draft_first_email: "Drafting email…",
   approve_and_dispatch: "Sending email…",
   get_negotiation_status: "Checking status…",
+  show_pending_draft: "Fetching draft…",
+  mark_negotiation_won: "Closing as won…",
+  mark_negotiation_lost: "Closing as lost…",
 };
 
 function toolLabel(name: string): string {
   return TOOL_LABELS[name] ?? `Using ${name}…`;
+}
+
+function getToolName(part: { type: string } & Record<string, unknown>): string {
+  return "toolName" in part && typeof part.toolName === "string"
+    ? part.toolName
+    : part.type.replace("tool-", "");
 }
 
 type EmailDraftOutput = {
@@ -42,24 +52,28 @@ export function MessageBubble({
     .map((p) => p.text)
     .join("");
 
-  const pendingToolNames = message.parts
-    ?.filter(isToolUIPart)
+  const toolParts = message.parts?.filter(isToolUIPart) ?? [];
+
+  const pendingToolNames = toolParts
     .filter(
       (p) => p.state === "input-streaming" || p.state === "input-available",
     )
-    .map((p) =>
-      "toolName" in p ? (p.toolName as string) : p.type.replace("tool-", ""),
-    );
+    .map(getToolName);
 
-  const emailDraftPart = message.parts
-    ?.filter(isToolUIPart)
-    .find(
-      (p) =>
-        !isUser &&
-        "toolName" in p &&
-        p.toolName === "draft_first_email" &&
-        p.state === "output-available",
-    );
+  const failedTools = toolParts
+    .filter((p) => p.state === "output-error")
+    .map((p) => ({
+      name: getToolName(p),
+      error: "errorText" in p && typeof p.errorText === "string" ? p.errorText : "",
+    }));
+
+  const emailDraftPart = toolParts.find(
+    (p) =>
+      !isUser &&
+      "toolName" in p &&
+      p.toolName === "draft_first_email" &&
+      p.state === "output-available",
+  );
 
   const emailDraft =
     emailDraftPart?.state === "output-available" &&
@@ -69,7 +83,8 @@ export function MessageBubble({
 
   const hasContent =
     textParts ||
-    (pendingToolNames && pendingToolNames.length > 0) ||
+    pendingToolNames.length > 0 ||
+    failedTools.length > 0 ||
     emailDraft;
   if (!hasContent) return null;
 
@@ -77,7 +92,7 @@ export function MessageBubble({
     <div
       className={`flex flex-col gap-3 ${isUser ? "items-end" : "items-start"}`}
     >
-      {textParts || (pendingToolNames && pendingToolNames.length > 0) ? (
+      {textParts || pendingToolNames.length > 0 ? (
         <div
           className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
             isUser
@@ -94,13 +109,28 @@ export function MessageBubble({
               </Markdown>
             )
           ) : null}
-          {pendingToolNames?.map((name, i) => (
+          {pendingToolNames.map((name, i) => (
             <p key={i} className="italic text-muted-foreground">
               {toolLabel(name)}
             </p>
           ))}
         </div>
       ) : null}
+
+      {failedTools.map((t, i) => (
+        <div
+          key={i}
+          className="flex max-w-[85%] items-start gap-2 rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+        >
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <div className="flex-1">
+            <p className="font-medium">Something went wrong</p>
+            <p className="mt-0.5 text-xs opacity-80">
+              {t.error || `${toolLabel(t.name).replace("…", "")} failed.`}
+            </p>
+          </div>
+        </div>
+      ))}
 
       {emailDraft ? (
         <div className="w-full max-w-md">

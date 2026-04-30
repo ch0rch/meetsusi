@@ -2,12 +2,18 @@
 
 import { useChat } from "@ai-sdk/react";
 import { DefaultChatTransport, isToolUIPart } from "ai";
-import { useRef, useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import type { UIMessage } from "ai";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatTyping } from "@/components/chat/chat-typing";
+import {
+  ChatContainerContent,
+  ChatContainerRoot,
+  ChatContainerScrollAnchor,
+} from "@/components/ui/chat-container";
 import { PromptSuggestion } from "@/components/ui/prompt-suggestion";
+import { ScrollButton } from "@/components/ui/scroll-button";
 import type { QuickSuggestion } from "@/lib/agent/quick-suggestions";
 
 interface SusiChatProps {
@@ -28,7 +34,6 @@ export function SusiChat({
   onNegotiationCreated,
 }: SusiChatProps) {
   const [input, setInput] = useState("");
-  const bottomRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { messages, sendMessage, status } = useChat({
@@ -55,10 +60,6 @@ export function SusiChat({
       }
     },
   });
-
-  useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
 
   const isLoading = status === "streaming" || status === "submitted";
 
@@ -91,8 +92,8 @@ export function SusiChat({
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="flex-1 overflow-y-auto px-6 py-6">
-        <div className="mx-auto max-w-3xl space-y-4">
+      <ChatContainerRoot className="relative flex-1 px-6 py-6">
+        <ChatContainerContent className="mx-auto max-w-3xl space-y-4">
           {messages.map((m) => (
             <MessageBubble
               key={m.id}
@@ -104,9 +105,15 @@ export function SusiChat({
 
           {isLoading ? <ChatTyping /> : null}
 
-          <div ref={bottomRef} />
+          <ChatContainerScrollAnchor />
+        </ChatContainerContent>
+
+        <div className="pointer-events-none absolute inset-x-0 bottom-4 flex justify-center">
+          <div className="pointer-events-auto">
+            <ScrollButton />
+          </div>
         </div>
-      </div>
+      </ChatContainerRoot>
 
       {suggestions && suggestions.length > 0 ? (
         <div className="shrink-0 border-t border-border px-6 py-3">
