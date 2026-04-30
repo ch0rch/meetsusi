@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
 import { Providers } from "./providers";
 import "./globals.css";
+
+const UMAMI_WEBSITE_ID = "60c9a714-ebc9-4a8f-a4eb-554a3994a819";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -128,6 +131,14 @@ export default function RootLayout({
         />
         <Providers>{children}</Providers>
         <Analytics />
+        {process.env.NODE_ENV === "production" ? (
+          <Script
+            defer
+            src="https://cloud.umami.is/script.js"
+            data-website-id={UMAMI_WEBSITE_ID}
+            strategy="afterInteractive"
+          />
+        ) : null}
       </body>
     </html>
   );
