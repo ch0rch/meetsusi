@@ -55,19 +55,58 @@ const metadataBase =
       ? new URL(`https://${process.env.VERCEL_URL}`)
       : new URL("https://meetsusi.com");
 
+const SITE_TITLE =
+  "Meet Susi — The AI agent that negotiates your bills by email";
+const SITE_DESCRIPTION =
+  "Save 20-40% on SaaS, rent, cars and services. Susi runs as a durable agent — she can wait days for a vendor reply, draft counter-offers, and only interrupts when she has news. You approve every email.";
+
 export const metadata: Metadata = {
   metadataBase,
   title: {
-    default: "Meet Susi — Your Personal Negotiation Agent",
+    default: SITE_TITLE,
     template: "%s | Meet Susi",
   },
-  description:
-    "Susi negotiates by email on your behalf. SaaS renewals, car prices, rent — she handles the awkward part so you don't have to.",
+  description: SITE_DESCRIPTION,
+  applicationName: "Meet Susi",
+  keywords: [
+    "AI negotiation",
+    "negotiation agent",
+    "SaaS negotiation",
+    "rent negotiation",
+    "AI assistant",
+    "durable agent",
+    "email AI",
+    "bill negotiation",
+    "Vercel Workflow SDK",
+    "Zero to Agent",
+  ],
+  authors: [{ name: "Meet Susi" }],
+  creator: "Meet Susi",
   icons: {
     icon: "/favicon.ico",
   },
+  openGraph: {
+    type: "website",
+    siteName: "Meet Susi",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    locale: "en_US",
+    alternateLocale: ["es_AR"],
+  },
   twitter: {
     card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
 };
 

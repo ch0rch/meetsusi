@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Open Agents — Spawn coding agents that run in the cloud";
+export const alt =
+  "Meet Susi — The AI agent that negotiates your bills by email";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const runtime = "edge";
@@ -14,36 +15,34 @@ export default function OgImage() {
         display: "flex",
         position: "relative",
         overflow: "hidden",
-        background: "#0a0a0a",
-        color: "#ffffff",
+        background:
+          "linear-gradient(135deg, #f5e8d3 0%, #f0d9c0 30%, #e8c5a8 60%, #d8a890 85%, #c08a7e 100%)",
+        color: "#2a1a0e",
         fontFamily:
           'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
       }}
     >
-      {/* Subtle radial glow — top-left warm, bottom-right cool */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           display: "flex",
           background:
-            "radial-gradient(ellipse 900px 500px at 15% 20%, rgba(255, 138, 61, 0.12), transparent 60%), radial-gradient(ellipse 700px 500px at 85% 80%, rgba(255, 255, 255, 0.04), transparent 60%)",
+            "radial-gradient(ellipse 900px 500px at 80% 15%, rgba(255, 230, 180, 0.7), transparent 60%), radial-gradient(ellipse 700px 600px at 10% 90%, rgba(180, 200, 160, 0.35), transparent 55%)",
         }}
       />
 
-      {/* Noise-ish grain approximation with faint horizontal lines */}
       <div
         style={{
           position: "absolute",
           inset: 0,
           display: "flex",
           backgroundImage:
-            "repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, transparent 1px, transparent 3px)",
-          opacity: 0.5,
+            "repeating-linear-gradient(0deg, rgba(80, 50, 30, 0.02) 0px, transparent 1px, transparent 3px)",
+          opacity: 0.6,
         }}
       />
 
-      {/* Border frame */}
       <div
         style={{
           position: "absolute",
@@ -52,12 +51,11 @@ export default function OgImage() {
           right: 28,
           bottom: 28,
           borderRadius: 24,
-          border: "1px solid rgba(255, 255, 255, 0.08)",
+          border: "1px solid rgba(60, 40, 25, 0.12)",
           display: "flex",
         }}
       />
 
-      {/* Content */}
       <div
         style={{
           position: "absolute",
@@ -71,7 +69,54 @@ export default function OgImage() {
           padding: "52px 56px",
         }}
       >
-        {/* Top section */}
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 12,
+            }}
+          >
+            <div
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: 999,
+                background: "#3a2615",
+                display: "flex",
+              }}
+            />
+            <span
+              style={{
+                fontSize: 22,
+                fontWeight: 600,
+                letterSpacing: "-0.01em",
+                color: "#3a2615",
+              }}
+            >
+              Meet Susi
+            </span>
+          </div>
+          <span
+            style={{
+              fontSize: 16,
+              fontWeight: 500,
+              color: "rgba(58, 38, 21, 0.7)",
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              display: "flex",
+            }}
+          >
+            Vercel · Zero to Agent · 2026
+          </span>
+        </div>
+
         <div
           style={{
             display: "flex",
@@ -79,70 +124,34 @@ export default function OgImage() {
             gap: 0,
           }}
         >
-          {/* Logo / icon + wordmark row */}
           <div
             style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 12,
-              marginBottom: 40,
-            }}
-          >
-            <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
-              <path
-                d="M4 17L10 11L4 5"
-                stroke="rgba(255,255,255,0.5)"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-              <path
-                d="M12 19H20"
-                stroke="rgba(255,255,255,0.5)"
-                stroke-width="1.5"
-                stroke-linecap="round"
-              />
-            </svg>
-            <span
-              style={{
-                fontSize: 20,
-                fontWeight: 600,
-                letterSpacing: "-0.01em",
-                color: "rgba(255, 255, 255, 0.5)",
-              }}
-            >
-              Open Agents
-            </span>
-          </div>
-
-          {/* Hero heading */}
-          <div
-            style={{
-              fontSize: 82,
+              fontSize: 78,
               fontWeight: 600,
-              lineHeight: 1,
+              lineHeight: 1.02,
               letterSpacing: "-0.04em",
-              color: "#ffffff",
+              color: "#1a0e05",
+              maxWidth: 1000,
             }}
           >
-            Open Agents.
+            The AI agent that negotiates your bills by email.
           </div>
 
-          {/* Subtitle */}
           <div
             style={{
-              marginTop: 24,
+              marginTop: 28,
               fontSize: 28,
-              lineHeight: 1.45,
-              color: "rgba(255, 255, 255, 0.45)",
-              maxWidth: 720,
+              lineHeight: 1.4,
+              color: "rgba(40, 24, 12, 0.72)",
+              maxWidth: 920,
+              display: "flex",
             }}
           >
-            Spawn coding agents that run infinitely in the cloud.
+            Save 20–40% on SaaS, rent, cars and services. Patient.
+            Professional. Persistent.
           </div>
         </div>
 
-        {/* Bottom row — tech pills */}
         <div
           style={{
             display: "flex",
@@ -150,12 +159,11 @@ export default function OgImage() {
             gap: 12,
           }}
         >
-          <TechPill label="AI SDK" />
-          <TechPill label="Gateway" />
-          <TechPill label="Sandbox" />
           <TechPill label="Workflow SDK" />
+          <TechPill label="AI SDK 6" />
+          <TechPill label="Claude Sonnet 4.6" />
+          <TechPill label="Cloudflare Email" />
 
-          {/* Spacer + domain */}
           <div
             style={{
               display: "flex",
@@ -166,11 +174,11 @@ export default function OgImage() {
             <span
               style={{
                 fontSize: 18,
-                color: "rgba(255, 255, 255, 0.3)",
+                color: "rgba(58, 38, 21, 0.55)",
                 letterSpacing: "0.01em",
               }}
             >
-              open-agents.dev
+              meetsusi.com
             </span>
           </div>
         </div>
@@ -188,10 +196,11 @@ function TechPill({ label }: { label: string }) {
         alignItems: "center",
         padding: "8px 16px",
         borderRadius: 999,
-        border: "1px solid rgba(255, 255, 255, 0.1)",
-        background: "rgba(255, 255, 255, 0.04)",
+        border: "1px solid rgba(60, 40, 25, 0.18)",
+        background: "rgba(255, 248, 235, 0.5)",
         fontSize: 16,
-        color: "rgba(255, 255, 255, 0.55)",
+        color: "rgba(50, 32, 18, 0.78)",
+        fontWeight: 500,
       }}
     >
       {label}
