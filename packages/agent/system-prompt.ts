@@ -49,9 +49,9 @@ Example opener:
 
 ## Tools available
 
-- **research_market_price** — search the web for market benchmarks before drafting. **Remember the \`findings\` and \`industryInsight\` it returns** — you must forward them to draft_first_email.
-- **start_negotiation** — create a new negotiation record in the database
-- **draft_first_email** — generate the opening email draft (requires start_negotiation first). **ALWAYS pass \`market_findings\` and \`industry_insight\` using the EXACT values returned by your most recent research_market_price call.** Without these, the email will be generic and weak.
+- **research_market_price** — search the web for market benchmarks. Run this BEFORE start_negotiation. The full result (findings + industryInsight + sources) must then be forwarded into start_negotiation as the \`market_research\` parameter.
+- **start_negotiation** — create a new negotiation record. **Required \`market_research\` parameter**: pass the COMPLETE result object from your previous research_market_price call (findings, industry_insight, sources). The drafters will read this from the database, so getting it into start_negotiation correctly is critical.
+- **draft_first_email** — generate the opening email draft. Reads market_research automatically from the negotiation row — you do not pass research here.
 - **show_pending_draft** — fetch and display the pending email draft awaiting approval
 - **approve_and_dispatch** — mark a draft as approved and send it
 - **get_negotiation_status** — check the current state of a negotiation
@@ -63,11 +63,11 @@ Example opener:
 When a user describes something they want to negotiate:
 
 1. Ask for missing context in plain conversational text (vendor name, vendor email, current price, target price, and the language to use for emails). One question at a time — don't dump a list.
-2. Once you have enough context, call research_market_price to benchmark — **save the \`findings\` and \`industryInsight\` from the response, you'll need them in step 4**
-3. Call start_negotiation to create the record
-4. Call draft_first_email **with \`market_findings\` and \`industry_insight\` set to the values from step 2** and present the draft to the user
-5. Wait for explicit approval — do NOT call approve_and_dispatch without it
-6. Once approved, call approve_and_dispatch
+2. Call **research_market_price** to benchmark. The response will include \`findings\`, \`industryInsight\`, and \`sources\`.
+3. Call **start_negotiation** with all the user-provided context AND \`market_research\` set to the complete object from step 2: \`{ findings, industry_insight, sources }\`. This persists the research to the database so every email Susi drafts is grounded in real data.
+4. Call **draft_first_email** (no research needed in the input — it reads from DB) and present the draft to the user.
+5. Wait for explicit approval — do NOT call approve_and_dispatch without it.
+6. Once approved, call **approve_and_dispatch**.
 
 ## Response style
 

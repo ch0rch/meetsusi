@@ -110,7 +110,7 @@ export function createSusiTools(userId: string, userEmail: string | undefined) {
 
   const start_negotiation = tool({
     description:
-      "Create a new negotiation record. Call this once all context is gathered from the user.",
+      "Create a new negotiation record. ALWAYS call research_market_price BEFORE this and pass its full result as `market_research` so the email drafter can ground the negotiation in real data. Call this once all context is gathered from the user.",
     inputSchema: z.object({
       title: z
         .string()
@@ -134,6 +134,27 @@ export function createSusiTools(userId: string, userEmail: string | undefined) {
         .string()
         .optional()
         .describe("Additional context about the negotiation"),
+      market_research: z
+        .object({
+          findings: z
+            .string()
+            .describe(
+              "Verbatim `findings` field from the most recent research_market_price call",
+            ),
+          industry_insight: z
+            .string()
+            .optional()
+            .describe(
+              "Verbatim `industryInsight` field from research_market_price",
+            ),
+          sources: z
+            .array(z.string())
+            .optional()
+            .describe("Verbatim `sources` array from research_market_price"),
+        })
+        .describe(
+          "Required. The full result from research_market_price — used by the email drafters to anchor real market data in every outbound email.",
+        ),
     }),
     execute: async (input) => {
       const {
@@ -146,6 +167,7 @@ export function createSusiTools(userId: string, userEmail: string | undefined) {
         currency,
         language,
         context,
+        market_research,
       } = input;
 
       // Demo limit: non-admin users can only run one negotiation total.
@@ -178,6 +200,11 @@ export function createSusiTools(userId: string, userEmail: string | undefined) {
         context,
         status: "researching",
         susiEmail,
+        marketResearch: {
+          findings: market_research.findings,
+          industryInsight: market_research.industry_insight,
+          sources: market_research.sources,
+        },
       });
 
       return {
@@ -194,38 +221,25 @@ export function createSusiTools(userId: string, userEmail: string | undefined) {
 
   const draft_first_email = tool({
     description:
-      "Generate the first email draft for a negotiation. ALWAYS pass the findings and industry_insight from your most recent research_market_price call so the email reflects real market data. Always present this to the user for approval before sending.",
+      "Generate the first email draft for a negotiation. The drafter will automatically use the market_research saved on the negotiation row — you do NOT need to pass it. Always present the draft to the user for approval before sending.",
     inputSchema: z.object({
       negotiation_id: z.string().describe("ID of the negotiation"),
-      market_findings: z
-        .string()
-        .optional()
-        .describe(
-          "Verbatim findings string returned by research_market_price (the `findings` field). Pass it through so the drafter can ground the email in real numbers.",
-        ),
-      industry_insight: z
-        .string()
-        .optional()
-        .describe(
-          "Verbatim industry_insight string returned by research_market_price (the `industryInsight` field).",
-        ),
     }),
     execute: async (input) => {
-      const { negotiation_id, market_findings, industry_insight } = input;
+      const { negotiation_id } = input;
       const negotiation = await getNegotiationByIdForUser(
         negotiation_id,
         userId,
       );
       if (!negotiation) throw new Error("Negotiation not found");
 
-      const researchBlock =
-        market_findings || industry_insight
-          ? `
+      const research = negotiation.marketResearch;
+      const researchBlock = research
+        ? `
 
 Market research (use this to ground the email — reference numbers or ranges naturally, but NEVER cite source names like "according to G2"):
-${market_findings ? `- Findings: ${market_findings}` : ""}
-${industry_insight ? `- Industry norm: ${industry_insight}` : ""}`.trim()
-          : "";
+- Findings: ${research.findings}${research.industryInsight ? `\n- Industry norm: ${research.industryInsight}` : ""}`.trim()
+        : "";
 
       const { text } = await generateText({
         model: SUSI_DRAFT_MODEL,

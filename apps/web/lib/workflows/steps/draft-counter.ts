@@ -30,6 +30,14 @@ export async function draftCounterOfferStep(input: {
   if (!vendorEmail)
     throw new FatalError(`Email ${input.vendorEmailId} not found`);
 
+  const research = negotiation.marketResearch;
+  const researchBlock = research
+    ? `
+
+Market research (anchor your counter on this — reference numbers or ranges naturally, NEVER cite source names like "according to G2"):
+- Findings: ${research.findings}${research.industryInsight ? `\n- Industry norm: ${research.industryInsight}` : ""}`.trim()
+    : "";
+
   const { text } = await generateText({
     model: SUSI_DRAFT_MODEL,
     system: `You are Susi, a professional negotiation assistant. Draft a polite but firm counter-offer email.
@@ -43,7 +51,7 @@ Write the email in ${negotiation.language}.`,
 - Vendor classification: ${input.classification.kind}
 - Vendor summary: ${input.classification.summary}
 - Counter price offered: ${input.classification.counterPrice ?? "none"}
-
+${researchBlock ? `\n${researchBlock}\n` : ""}
 Vendor's email:
 ${vendorEmail.body}
 

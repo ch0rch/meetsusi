@@ -1,0 +1,1 @@
+ALTER TABLE "negotiations" ADD COLUMN IF NOT EXISTS "market_research" jsonb;

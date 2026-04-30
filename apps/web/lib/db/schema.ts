@@ -71,6 +71,15 @@ export const negotiations = pgTable(
     // Language for all outbound emails (e.g. "Spanish", "English", "Portuguese")
     language: text("language").notNull().default("English"),
 
+    // Market research captured by Susi before drafting (Tavily findings + industry insight + sources).
+    // Persisted so draft_first_email and draftCounterOfferStep can ground emails in real data
+    // without depending on the chat model's working memory.
+    marketResearch: jsonb("market_research").$type<{
+      findings: string;
+      industryInsight?: string;
+      sources?: string[];
+    } | null>(),
+
     // Status
     status: negotiationStatusEnum("status").notNull().default("researching"),
     finalPrice: numeric("final_price"),
