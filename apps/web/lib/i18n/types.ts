@@ -79,5 +79,14 @@ export type CopyTree = {
   };
   footer: {
     tagline: string;
+    about: string;
+    builtBy: string;
+    hackathon: string;
+  };
+  about: {
+    title: string;
+    paragraphs: [string, string, string, string, string, string];
+    signature: string;
+    backHome: string;
   };
 };

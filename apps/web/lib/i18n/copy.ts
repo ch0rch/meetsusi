@@ -116,6 +116,22 @@ const en: CopyTree = {
   },
   footer: {
     tagline: "Everyone deserves a Susi.",
+    about: "Why “Susi”",
+    builtBy: "Built with care by",
+    hackathon: "for the Vercel Zero to Agent Hackathon",
+  },
+  about: {
+    title: "Why it's called Susi",
+    paragraphs: [
+      "Susi was my grandmother.",
+      "At eighteen, a degenerative illness took the movement of her body — but never the movement of her mind. She lived like that for half a century, and in every one of those years she was the most curious, patient, and wise person I've ever known. She taught me to explore, to ask questions, to slow down, to trust that good things take their time.",
+      "I was born on her birthday. She always said I was her birthday gift.",
+      "This project is mine to her.",
+      "The Susi you're using now does what the real Susi did: she listens carefully, waits for the right moment, speaks calmly, never pushes. When a negotiation stalls for days, she doesn't get impatient. Because the real Susi taught me that patience is a form of intelligence.",
+      "If she helps you close better deals — and reclaim some time for yourself — part of the credit is hers.",
+    ],
+    signature: "— Chorch",
+    backHome: "Back home",
   },
 };
 
@@ -235,6 +251,22 @@ const es: CopyTree = {
   },
   footer: {
     tagline: "Todos merecen una Susi.",
+    about: "Por qué “Susi”",
+    builtBy: "Construido con cariño por",
+    hackathon: "para el Vercel Zero to Agent Hackathon",
+  },
+  about: {
+    title: "Por qué se llama Susi",
+    paragraphs: [
+      "Susi era mi abuela.",
+      "A los 18 años, una enfermedad degenerativa le quitó el movimiento del cuerpo — pero no de la mente. Vivió así medio siglo más, y en cada uno de esos años fue la persona más curiosa, paciente y sabia que conocí. Me enseñó a explorar, a hacer preguntas, a no apurarme, a confiar en que las cosas buenas tardan.",
+      "Yo nací en su cumpleaños. Ella siempre dijo que yo era su regalo.",
+      "Este proyecto es el mío para ella.",
+      "La Susi que estás usando hace lo mismo que hacía la Susi real: escucha con atención, espera el momento justo, habla con calma, nunca empuja. Cuando una negociación se estanca por días, no se impacienta. Porque la verdadera Susi me enseñó que la paciencia es una forma de inteligencia.",
+      "Si te ayuda a cerrar mejores tratos — y a recuperar tiempo para vos — parte del crédito es de ella.",
+    ],
+    signature: "— Chorch",
+    backHome: "Volver al inicio",
   },
 };
 
