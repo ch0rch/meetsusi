@@ -7,12 +7,15 @@ import type { UIMessage } from "ai";
 import { MessageBubble } from "@/components/chat/message-bubble";
 import { ChatInput } from "@/components/chat/chat-input";
 import { ChatTyping } from "@/components/chat/chat-typing";
+import { PromptSuggestion } from "@/components/ui/prompt-suggestion";
+import type { QuickSuggestion } from "@/lib/agent/quick-suggestions";
 
 interface SusiChatProps {
   apiUrl?: string;
   body?: Record<string, unknown>;
   initialMessages?: UIMessage[];
   placeholder?: string;
+  suggestions?: QuickSuggestion[];
   onNegotiationCreated?: (negotiationId: string) => void;
 }
 
@@ -21,6 +24,7 @@ export function SusiChat({
   body,
   initialMessages,
   placeholder = "Message Susi…",
+  suggestions,
   onNegotiationCreated,
 }: SusiChatProps) {
   const [input, setInput] = useState("");
@@ -74,6 +78,17 @@ export function SusiChat({
     setTimeout(() => textareaRef.current?.focus(), 0);
   }
 
+  function handleSuggestion(suggestion: QuickSuggestion) {
+    if (isLoading) return;
+    // Prompts that end with a space are starters meant for the user to complete.
+    if (suggestion.prompt.endsWith(" ")) {
+      setInput(suggestion.prompt);
+      setTimeout(() => textareaRef.current?.focus(), 0);
+      return;
+    }
+    sendMessage({ text: suggestion.prompt });
+  }
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
       <div className="flex-1 overflow-y-auto px-6 py-6">
@@ -92,6 +107,23 @@ export function SusiChat({
           <div ref={bottomRef} />
         </div>
       </div>
+
+      {suggestions && suggestions.length > 0 ? (
+        <div className="shrink-0 border-t border-border px-6 pt-3">
+          <div className="mx-auto flex max-w-3xl flex-wrap gap-2">
+            {suggestions.map((s) => (
+              <PromptSuggestion
+                key={s.label}
+                size="sm"
+                onClick={() => handleSuggestion(s)}
+                disabled={isLoading}
+              >
+                {s.label}
+              </PromptSuggestion>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       <ChatInput
         value={input}

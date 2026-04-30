@@ -3,6 +3,7 @@ import { SusiChat } from "@/components/susi-chat";
 import { StatusBadge } from "@/components/dashboard/status-badge";
 import { DealInfoPanel } from "@/components/dashboard/deal-info-panel";
 import { DealInfoSheet } from "@/components/dashboard/deal-info-sheet";
+import { getQuickSuggestions } from "@/lib/agent/quick-suggestions";
 import type { Negotiation } from "@/lib/db/schema";
 
 function buildIntro(negotiation: Negotiation): UIMessage {
@@ -59,6 +60,7 @@ export function NegotiationChat({ negotiation, history }: NegotiationChatProps) 
           body={{ negotiationId: negotiation.id }}
           initialMessages={initialMessages}
           placeholder="Message Susi…"
+          suggestions={getQuickSuggestions(negotiation.status)}
         />
         <DealInfoPanel negotiation={negotiation} />
       </div>
