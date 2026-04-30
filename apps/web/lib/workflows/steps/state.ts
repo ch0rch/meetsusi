@@ -1,11 +1,11 @@
 import { db } from "@/lib/db/client";
-import { negotiations } from "@/lib/db/schema";
+import { negotiations, type Negotiation } from "@/lib/db/schema";
 import { and, eq, notInArray } from "drizzle-orm";
 
 // A negotiation in any of these statuses is terminal — never overwrite.
 // Why: prevents the workflow from clobbering a manual close (mark_negotiation_won/lost)
 // when a queued vendor reply gets processed after the user already settled the deal.
-const TERMINAL_STATUSES = ["won", "lost", "cancelled"] as const;
+const TERMINAL_STATUSES: Negotiation["status"][] = ["won", "lost", "cancelled"];
 
 export async function markWonStep(
   negotiationId: string,
