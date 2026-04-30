@@ -2,6 +2,7 @@
 
 import { isTextUIPart, isToolUIPart } from "ai";
 import type { UIMessage } from "ai";
+import { Markdown } from "@/components/ui/markdown";
 import { EmailDraftCard } from "./email-draft-card";
 
 const TOOL_LABELS: Record<string, string> = {
@@ -85,7 +86,13 @@ export function MessageBubble({
           }`}
         >
           {textParts ? (
-            <p className="whitespace-pre-wrap">{textParts}</p>
+            isUser ? (
+              <p className="whitespace-pre-wrap">{textParts}</p>
+            ) : (
+              <Markdown className="space-y-2 [&_a]:text-foreground [&_a]:underline [&_a]:underline-offset-2 [&_code]:rounded [&_code]:bg-background/40 [&_code]:px-1 [&_code]:py-0.5 [&_code]:text-xs [&_li]:my-1 [&_ol]:list-decimal [&_ol]:pl-5 [&_p]:leading-relaxed [&_strong]:font-semibold [&_ul]:list-disc [&_ul]:pl-5">
+                {textParts}
+              </Markdown>
+            )
           ) : null}
           {pendingToolNames?.map((name, i) => (
             <p key={i} className="italic text-muted-foreground">
