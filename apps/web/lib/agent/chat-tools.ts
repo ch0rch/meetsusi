@@ -7,6 +7,7 @@ import {
   createNegotiation,
   createEmail,
   countNegotiationsForUser,
+  failPendingDraftsForNegotiation,
   getNegotiationByIdForUser,
   getEmailById,
   listEmailsForNegotiation,
@@ -425,6 +426,117 @@ Write ONLY the email body (no subject line, no greeting header — just the body
     },
   });
 
+  // ---------------------------------------------------------------------------
+  // mark_negotiation_won
+  // ---------------------------------------------------------------------------
+
+  const mark_negotiation_won = tool({
+    description:
+      "Manually close a negotiation as WON when the deal closed but the workflow didn't auto-detect it (e.g. vendor accepted in a reply that got queued behind a pending counter-offer, or user closed the deal off-channel). Only call this when the user explicitly confirms a deal closed and gives the final price.",
+    inputSchema: z.object({
+      negotiation_id: z.string().describe("ID of the negotiation"),
+      final_price: z
+        .number()
+        .describe("Final agreed price as a number, in the negotiation's currency"),
+    }),
+    execute: async (input) => {
+      const { negotiation_id, final_price } = input;
+      const negotiation = await getNegotiationByIdForUser(
+        negotiation_id,
+        userId,
+      );
+      if (!negotiation) throw new Error("Negotiation not found");
+
+      if (
+        negotiation.status === "won" ||
+        negotiation.status === "lost" ||
+        negotiation.status === "cancelled"
+      ) {
+        return {
+          error: "already_closed",
+          message: `Negotiation is already in status "${negotiation.status}". No action taken.`,
+        };
+      }
+
+      await updateNegotiation(negotiation_id, {
+        status: "won",
+        finalPrice: final_price.toString(),
+        wonAt: new Date(),
+      });
+      const cancelledDrafts = await failPendingDraftsForNegotiation(
+        negotiation_id,
+        `deal closed manually at ${final_price} ${negotiation.currency} before this draft was approved`,
+      );
+
+      const savings = negotiation.currentPrice
+        ? parseFloat(negotiation.currentPrice) - final_price
+        : null;
+
+      return {
+        status: "won",
+        final_price: final_price.toString(),
+        currency: negotiation.currency,
+        savings: savings?.toFixed(2),
+        cancelled_pending_drafts: cancelledDrafts,
+        message: `Negotiation marked as WON at ${final_price} ${negotiation.currency}.${
+          savings !== null && savings > 0
+            ? ` You saved ${savings.toFixed(2)} ${negotiation.currency}.`
+            : ""
+        }${cancelledDrafts > 0 ? ` Cancelled ${cancelledDrafts} pending draft(s).` : ""}`,
+      };
+    },
+  });
+
+  // ---------------------------------------------------------------------------
+  // mark_negotiation_lost
+  // ---------------------------------------------------------------------------
+
+  const mark_negotiation_lost = tool({
+    description:
+      "Manually close a negotiation as LOST when the deal didn't go through (vendor refused, user walked away, off-channel breakdown). Only call this when the user explicitly says they want to give up or the deal fell through.",
+    inputSchema: z.object({
+      negotiation_id: z.string().describe("ID of the negotiation"),
+      reason: z
+        .string()
+        .optional()
+        .describe("Optional short reason — e.g. 'vendor refused', 'user walked away'"),
+    }),
+    execute: async (input) => {
+      const { negotiation_id, reason } = input;
+      const negotiation = await getNegotiationByIdForUser(
+        negotiation_id,
+        userId,
+      );
+      if (!negotiation) throw new Error("Negotiation not found");
+
+      if (
+        negotiation.status === "won" ||
+        negotiation.status === "lost" ||
+        negotiation.status === "cancelled"
+      ) {
+        return {
+          error: "already_closed",
+          message: `Negotiation is already in status "${negotiation.status}". No action taken.`,
+        };
+      }
+
+      await updateNegotiation(negotiation_id, {
+        status: "lost",
+        lostAt: new Date(),
+      });
+      const cancelledDrafts = await failPendingDraftsForNegotiation(
+        negotiation_id,
+        reason ? `negotiation closed as lost — ${reason}` : "negotiation closed as lost",
+      );
+
+      return {
+        status: "lost",
+        cancelled_pending_drafts: cancelledDrafts,
+        message: `Negotiation marked as LOST.${reason ? ` Reason: ${reason}.` : ""}${cancelledDrafts > 0 ? ` Cancelled ${cancelledDrafts} pending draft(s).` : ""}`,
+      };
+    },
+  });
+
   return {
     research_market_price,
     start_negotiation,
@@ -432,5 +544,7 @@ Write ONLY the email body (no subject line, no greeting header — just the body
     show_pending_draft,
     approve_and_dispatch,
     get_negotiation_status,
+    mark_negotiation_won,
+    mark_negotiation_lost,
   };
 }

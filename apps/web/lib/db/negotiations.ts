@@ -139,6 +139,23 @@ export async function updateEmail(
   await db.update(emails).set(patch).where(eq(emails.id, id));
 }
 
+export async function failPendingDraftsForNegotiation(
+  negotiationId: string,
+  reason: string,
+): Promise<number> {
+  const updated = await db
+    .update(emails)
+    .set({ status: "failed", failedReason: reason })
+    .where(
+      and(
+        eq(emails.negotiationId, negotiationId),
+        eq(emails.status, "pending_approval"),
+      ),
+    )
+    .returning({ id: emails.id });
+  return updated.length;
+}
+
 export async function listEmailsForNegotiation(
   negotiationId: string,
 ): Promise<Email[]> {

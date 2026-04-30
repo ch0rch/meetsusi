@@ -1,6 +1,11 @@
 import { db } from "@/lib/db/client";
 import { negotiations } from "@/lib/db/schema";
-import { eq } from "drizzle-orm";
+import { and, eq, notInArray } from "drizzle-orm";
+
+// A negotiation in any of these statuses is terminal — never overwrite.
+// Why: prevents the workflow from clobbering a manual close (mark_negotiation_won/lost)
+// when a queued vendor reply gets processed after the user already settled the deal.
+const TERMINAL_STATUSES = ["won", "lost", "cancelled"] as const;
 
 export async function markWonStep(
   negotiationId: string,
@@ -16,7 +21,12 @@ export async function markWonStep(
       wonAt: new Date(),
       updatedAt: new Date(),
     })
-    .where(eq(negotiations.id, negotiationId));
+    .where(
+      and(
+        eq(negotiations.id, negotiationId),
+        notInArray(negotiations.status, TERMINAL_STATUSES),
+      ),
+    );
 }
 
 export async function markLostStep(
@@ -32,7 +42,12 @@ export async function markLostStep(
       lostAt: new Date(),
       updatedAt: new Date(),
     })
-    .where(eq(negotiations.id, negotiationId));
+    .where(
+      and(
+        eq(negotiations.id, negotiationId),
+        notInArray(negotiations.status, TERMINAL_STATUSES),
+      ),
+    );
 
   console.log(`Negotiation ${negotiationId} lost: ${reason}`);
 }
@@ -49,7 +64,12 @@ export async function markCancelledStep(
       status: "cancelled",
       updatedAt: new Date(),
     })
-    .where(eq(negotiations.id, negotiationId));
+    .where(
+      and(
+        eq(negotiations.id, negotiationId),
+        notInArray(negotiations.status, TERMINAL_STATUSES),
+      ),
+    );
 
   console.log(`Negotiation ${negotiationId} cancelled: ${reason}`);
 }
