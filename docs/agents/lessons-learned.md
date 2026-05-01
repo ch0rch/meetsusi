@@ -10,6 +10,10 @@ Hard-won knowledge from building this codebase. When you make a mistake or disco
 - `emails` and `workflow_events` do not store `user_id` directly — their RLS policies subquery `negotiations` to derive ownership via `negotiation_id`. This works but means each access does a join through `negotiations`; if hot at scale, consider denormalizing `user_id` onto these tables rather than tightening the policy.
 - `market_research_cache` has RLS enabled with no policies on purpose: it is a cross-user cache only ever touched from the server with the `service_role` key. Supabase's `rls_enabled_no_policy` advisor flags this as INFO — it is expected, not a bug.
 
+## Build & Deploy
+
+- Turbo's `outputs` array on the `build` task must include `.next/**` (with `!.next/cache/**` to skip the regenerable internal cache); shipping with only `dist/**` causes silent Turbo cache hits that replay build logs without restoring `.next/`, after which Vercel fails with `routes-manifest.json couldn't be found`. The smoking gun in the Vercel log is an impossibly fast `Time: <1s >>> FULL TURBO` line — that is a cache hit replaying logs, not a real build. To unstick an already-broken deploy, redeploy from the Vercel dashboard with "Use existing Build Cache" unchecked.
+
 ## General / Tooling
 
 - Skill discovery de-duplicates by first-seen name, so project skill directories must be scanned before user-level directories to allow project overrides.
