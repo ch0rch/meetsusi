@@ -26,7 +26,7 @@ Chat (Next.js + AI SDK) ──▶ Workflow SDK durable runs ──▶ Cloudflare
               │                       │
               ▼                       │
          Supabase Postgres ◀──────────┘
-         (Drizzle ORM, RLS off, app-level auth)
+         (Drizzle ORM, RLS on with user-scoped policies + app-level filtering)
 ```
 
 - **Chat** is synchronous, streaming, and reflects workflow state. It does NOT manage the negotiation directly.

@@ -2,6 +2,14 @@
 
 Hard-won knowledge from building this codebase. When you make a mistake or discover a non-obvious behavior, add it here.
 
+## Auth & Database
+
+- Identity is fully delegated to Supabase Auth — there is no `public.users` table by design. The real users table is `auth.users`, and the `public` schema only stores business data referencing the user UUID via a `text` column (no FK across schemas, since `auth` is owned by Supabase migrations and `public` by Drizzle).
+- Login is magic-link only (`supabase.auth.signInWithOtp` in `apps/web/components/auth/sign-in-button.tsx`); the callback at `/auth/callback/route.ts` exchanges the code for a session via `exchangeCodeForSession`. There are no passwords, so the `auth_leaked_password_protection` Supabase advisor warning is irrelevant for this app.
+- Security is double-layered, not app-level only: every business table in `public` (`negotiations`, `messages`, `emails`, `workflow_events`) has RLS enabled with `PERMISSIVE` policies on role `authenticated` that compare `auth.uid()::text = user_id`. Server queries also filter by `userId`, but the DB enforces isolation independently.
+- `emails` and `workflow_events` do not store `user_id` directly — their RLS policies subquery `negotiations` to derive ownership via `negotiation_id`. This works but means each access does a join through `negotiations`; if hot at scale, consider denormalizing `user_id` onto these tables rather than tightening the policy.
+- `market_research_cache` has RLS enabled with no policies on purpose: it is a cross-user cache only ever touched from the server with the `service_role` key. Supabase's `rls_enabled_no_policy` advisor flags this as INFO — it is expected, not a bug.
+
 ## General / Tooling
 
 - Skill discovery de-duplicates by first-seen name, so project skill directories must be scanned before user-level directories to allow project overrides.
